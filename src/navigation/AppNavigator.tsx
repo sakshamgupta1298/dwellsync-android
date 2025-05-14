@@ -20,6 +20,8 @@ import TenantManagementScreen from '../screens/owner/TenantManagementScreen';
 import BillManagementScreen from '../screens/owner/BillManagementScreen';
 import PaymentTrackingScreen from '../screens/owner/PaymentTrackingScreen';
 
+import LandingScreen from '../screens/LandingScreen';
+
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -35,25 +37,26 @@ const AppNavigator = () => {
         {!user ? (
           // Auth Stack
           <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} />
-            <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} />
+            <Stack.Screen name="Landing" component={LandingScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
           </>
         ) : user.is_owner ? (
           // Owner Stack
           <>
-            <Stack.Screen name="OwnerDashboard" component={OwnerDashboardScreen} />
-            <Stack.Screen name="TenantManagement" component={TenantManagementScreen} />
-            <Stack.Screen name="BillManagement" component={BillManagementScreen} />
-            <Stack.Screen name="PaymentTracking" component={PaymentTrackingScreen} />
+            <Stack.Screen name="OwnerDashboard" component={OwnerDashboardScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="TenantManagement" component={TenantManagementScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="BillManagement" component={BillManagementScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="PaymentTracking" component={PaymentTrackingScreen} options={{ headerShown: false }}/>
           </>
         ) : (
           // Tenant Stack
           <>
-            <Stack.Screen name="TenantDashboard" component={TenantDashboardScreen} />
-            <Stack.Screen name="MeterReading" component={MeterReadingScreen} />
-            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
-            <Stack.Screen name="TenantProfile" component={TenantProfileScreen} />
+            <Stack.Screen name="TenantDashboard" component={TenantDashboardScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="MeterReading" component={MeterReadingScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="TenantProfile" component={TenantProfileScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

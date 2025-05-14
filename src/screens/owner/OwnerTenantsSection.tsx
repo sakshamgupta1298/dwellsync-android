@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { ownerService } from '../../services/api';
+import LinearGradient from 'react-native-linear-gradient';
+import { Surface } from 'react-native-paper';
 
 const OwnerTenantsSection = () => {
   const [tenants, setTenants] = useState<any[]>([]);
@@ -48,39 +50,88 @@ const OwnerTenantsSection = () => {
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tenants</Text>
-      <FlatList
-        data={tenants}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.tenantCard}>
-            <Text style={styles.tenantName}>{item.name}</Text>
-            <Text>ID: {item.tenant_id}</Text>
-            <Text>Rent: ₹{item.rent_amount}</Text>
-            <Text>Status: {item.status || 'Active'}</Text>
-            <TouchableOpacity
-              style={[styles.deleteButton, deletingId === item.id && { opacity: 0.5 }]}
-              onPress={() => handleDelete(item.id)}
-              disabled={deletingId === item.id}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        ListEmptyComponent={<Text>No tenants found.</Text>}
-      />
-    </View>
+    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+      <Surface style={styles.container}>
+        <Text style={styles.title}>Tenants</Text>
+        <FlatList
+          data={tenants}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.tenantCard}>
+              <Text style={styles.tenantName}>{item.name}</Text>
+              <Text style={styles.label}>ID: <Text style={styles.value}>{item.tenant_id}</Text></Text>
+              <Text style={styles.label}>Rent: <Text style={styles.value}>₹{item.rent_amount}</Text></Text>
+              <Text style={styles.label}>Status: <Text style={styles.value}>{item.status || 'Active'}</Text></Text>
+              <TouchableOpacity
+                style={[styles.deleteButton, deletingId === item.id && { opacity: 0.5 }]}
+                onPress={() => handleDelete(item.id)}
+                disabled={deletingId === item.id}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          ListEmptyComponent={<Text style={styles.noTenantsText}>No tenants found.</Text>}
+        />
+      </Surface>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-  tenantCard: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 10, elevation: 1 },
-  tenantName: { fontWeight: 'bold', fontSize: 16 },
-  deleteButton: { backgroundColor: '#e74c3c', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 10 },
-  deleteButtonText: { color: '#fff', fontWeight: 'bold' },
+  gradient: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: 'transparent',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+    letterSpacing: 1,
+  },
+  tenantCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 4,
+  },
+  tenantName: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#ff3e55',
+    marginBottom: 4,
+  },
+  label: {
+    color: '#ff3e55',
+    fontWeight: 'bold',
+  },
+  value: {
+    color: '#333',
+    fontWeight: 'normal',
+  },
+  deleteButton: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  noTenantsText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 20,
+    textAlign: 'center',
+  },
 });
 
 export default OwnerTenantsSection;

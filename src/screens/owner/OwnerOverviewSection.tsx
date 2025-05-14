@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Alert } from 'react-native';
+import { Text, TextInput, Button, Surface, Card } from 'react-native-paper';
+import LinearGradient from 'react-native-linear-gradient';
 import { ownerService } from '../../services/api'; // Make sure this import exists
 import { useAuth } from '../../utils/AuthContext';
 
+const { width } = Dimensions.get('window');
 
 const OwnerOverviewSection = () => {
   const { signOut } = useAuth();
@@ -69,74 +72,96 @@ const OwnerOverviewSection = () => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>Owner Dashboard</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.row}>
-        {/* Set Electricity Rate */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Set Electricity Rate</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Rate per Unit (₹)"
-            value={rate}
-            onChangeText={setRate}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity style={styles.button} onPress={handleUpdateRate}>
-            <Text style={styles.buttonText}>Update Rate</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Register New Tenant */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Register New Tenant</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Tenant Name"
-            value={tenantName}
-            onChangeText={setTenantName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Monthly Rent (₹)"
-            value={monthlyRent}
-            onChangeText={setMonthlyRent}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Initial Electricity Meter Reading"
-            value={initialElectricity}
-            onChangeText={setInitialElectricity}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Initial Water Meter Reading"
-            value={initialWater}
-            onChangeText={setInitialWater}
-            keyboardType="numeric"
-          />
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#2ecc40' }]} onPress={handleRegisterTenant}>
-            <Text style={styles.buttonText}>Register Tenant</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* You can add summary cards or stats here if needed */}
-    </ScrollView>
+    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Surface style={styles.container}>
+          <View style={styles.headerRow}>
+            <Text style={styles.heading}>Overview</Text>
+            <Button mode="text" onPress={signOut} labelStyle={styles.logoutText}>
+              Logout
+            </Button>
+          </View>
+          <Card style={styles.card}>
+            <Card.Title title="Set Electricity Rate" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/bolt.png')} style={styles.icon} />} />
+            <Card.Content>
+              <TextInput
+                style={styles.input}
+                mode="outlined"
+                label="Rate per Unit (₹)"
+                value={rate}
+                onChangeText={setRate}
+                keyboardType="numeric"
+                // left={<TextInput.Icon icon="flash" />}
+                theme={{ roundness: 12 }}
+              />
+              <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleUpdateRate}>
+                Update Rate
+              </Button>
+            </Card.Content>
+          </Card>
+          <Card style={styles.card}>
+            <Card.Title title="Register New Tenant" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/user-plus.png')} style={styles.icon} />} />
+            <Card.Content>
+              <TextInput
+                style={styles.input}
+                mode="outlined"
+                label="Tenant Name"
+                value={tenantName}
+                onChangeText={setTenantName}
+                // left={<TextInput.Icon icon="account" />}
+                theme={{ roundness: 12 }}
+              />
+              <TextInput
+                style={styles.input}
+                mode="outlined"
+                label="Monthly Rent (₹)"
+                value={monthlyRent}
+                onChangeText={setMonthlyRent}
+                keyboardType="numeric"
+                // left={<TextInput.Icon icon="currency-inr" />}
+                theme={{ roundness: 12 }}
+              />
+              <TextInput
+                style={styles.input}
+                mode="outlined"
+                label="Initial Electricity Meter Reading"
+                value={initialElectricity}
+                onChangeText={setInitialElectricity}
+                keyboardType="numeric"
+                theme={{ roundness: 12 }}
+              />
+              <TextInput
+                style={styles.input}
+                mode="outlined"
+                label="Initial Water Meter Reading"
+                value={initialWater}
+                onChangeText={setInitialWater}
+                keyboardType="numeric"
+                theme={{ roundness: 12 }}
+              />
+              <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleRegisterTenant}>
+                Register Tenant
+              </Button>
+            </Card.Content>
+          </Card>
+        </Surface>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
+    flex: 1,
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
   },
   headerRow: {
     flexDirection: 'row',
@@ -147,53 +172,47 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#fff',
     textAlign: 'center',
-    
-  },
-  logoutButton: {
-    padding: 8,
-    backgroundColor: '#eee',
-    borderRadius: 6,
+    letterSpacing: 1,
   },
   logoutText: {
-    color: '#007AFF',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
   card: {
-    flex: 1,
+    borderRadius: 20,
+    marginBottom: 24,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    marginHorizontal: 4,
-    elevation: 2,
+    elevation: 4,
+    paddingVertical: 8,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#ff3e55',
+    letterSpacing: 1,
+  },
+  icon: {
+    width: 32,
+    height: 32,
+    marginRight: 8,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
+    marginBottom: 14,
+    backgroundColor: '#fff',
   },
-  button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 4,
+  actionButton: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    elevation: 2,
+    marginTop: 8,
   },
-  buttonText: {
-    color: '#fff',
+  actionButtonLabel: {
+    color: '#ff3e55',
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

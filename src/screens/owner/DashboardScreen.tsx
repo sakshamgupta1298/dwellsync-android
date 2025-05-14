@@ -37,13 +37,11 @@ const OwnerDashboardScreen = () => {
       renderTabBar={props => (
         <TabBar
           {...props}
-          indicatorStyle={{ backgroundColor: '#007AFF' }}
+          indicatorStyle={{ backgroundColor: '#ff3e55' }}
           style={{ backgroundColor: '#fff' }}
-          activeColor="#000"
+          activeColor="#ff3e55"
           inactiveColor="#000"
-          labelStyle={{ fontWeight: 'bold' }}
         />
-    
       )}
     />
   );

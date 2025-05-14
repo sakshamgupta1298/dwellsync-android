@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,20 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  StatusBar,
+  ScrollView,
 } from 'react-native';
 import { launchCamera } from 'react-native-image-picker';
 import { tenantService } from '../../services/api';
+import LinearGradient from 'react-native-linear-gradient';
+import { Surface } from 'react-native-paper';
 
 const MeterReadingScreen = ({ navigation }: any) => {
+  // Hide the navigation header
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
   // Electricity state
   const [electricityValue, setElectricityValue] = useState('');
   const [electricityImageUri, setElectricityImageUri] = useState<string | null>(null);
@@ -72,132 +81,163 @@ const MeterReadingScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Electricity Card */}
-      <View style={styles.form}>
-        <Text style={styles.cardTitle}>Electricity Meter Reading</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter electricity meter reading"
-          value={electricityValue}
-          onChangeText={setElectricityValue}
-          keyboardType="numeric"
-        />
-        <TouchableOpacity style={styles.cameraButton} onPress={() => takePhoto('electricity')}>
-          <Text style={styles.cameraButtonText}>Take Photo</Text>
+    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 40 }}>
+        {/* Back Button */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        {electricityImageUri && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: electricityImageUri }} style={styles.image} />
-          </View>
-        )}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={() => handleSubmit('electricity')}
-          disabled={electricityLoading}
-        >
-          {electricityLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Submit Electricity Reading</Text>
+        {/* Electricity Card */}
+        <Surface style={styles.card}>
+          <Text style={styles.cardTitle}>Electricity Meter Reading</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter electricity meter reading"
+            placeholderTextColor="#bbb"
+            value={electricityValue}
+            onChangeText={setElectricityValue}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => takePhoto('electricity')}>
+            <Text style={styles.secondaryButtonText}>{electricityImageUri ? 'Retake Photo' : 'Take Photo'}</Text>
+          </TouchableOpacity>
+          {electricityImageUri && (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: electricityImageUri }} style={styles.image} />
+            </View>
           )}
-        </TouchableOpacity>
-      </View>
-      {/* Water Card */}
-      <View style={styles.form}>
-        <Text style={styles.cardTitle}>Water Meter Reading</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter water meter reading"
-          value={waterValue}
-          onChangeText={setWaterValue}
-          keyboardType="numeric"
-        />
-        <TouchableOpacity style={styles.cameraButton} onPress={() => takePhoto('water')}>
-          <Text style={styles.cameraButtonText}>Take Photo</Text>
-        </TouchableOpacity>
-        {waterImageUri && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: waterImageUri }} style={styles.image} />
-          </View>
-        )}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={() => handleSubmit('water')}
-          disabled={waterLoading}
-        >
-          {waterLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Submit Water Reading</Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => handleSubmit('electricity')}
+            disabled={electricityLoading}
+          >
+            {electricityLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Submit Electricity Reading</Text>
+            )}
+          </TouchableOpacity>
+        </Surface>
+        {/* Water Card */}
+        <Surface style={styles.card}>
+          <Text style={styles.cardTitle}>Water Meter Reading</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter water meter reading"
+            placeholderTextColor="#bbb"
+            value={waterValue}
+            onChangeText={setWaterValue}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => takePhoto('water')}>
+            <Text style={styles.secondaryButtonText}>{waterImageUri ? 'Retake Photo' : 'Take Photo'}</Text>
+          </TouchableOpacity>
+          {waterImageUri && (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: waterImageUri }} style={styles.image} />
+            </View>
           )}
-        </TouchableOpacity>
-      </View>
-    </View>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => handleSubmit('water')}
+            disabled={waterLoading}
+          >
+            {waterLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Submit Water Reading</Text>
+            )}
+          </TouchableOpacity>
+        </Surface>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
   },
-  form: {
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 18,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 18,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    elevation: 2,
+  },
+  backButtonText: {
+    color: '#ff3e55',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+  card: {
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 18,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 20,
+    marginBottom: 22,
+    elevation: 5,
+    shadowColor: '#ff3e55',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   cardTitle: {
-    color: '#007AFF',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 20,
+    color: '#ff3e55',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 18,
+    letterSpacing: 1,
   },
   input: {
     backgroundColor: '#f5f5f5',
     padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+    borderRadius: 12,
+    marginBottom: 18,
     fontSize: 16,
+    color: '#333',
   },
-  cameraButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderColor: '#ff3e55',
+    borderWidth: 2,
+    borderRadius: 24,
+    paddingVertical: 10,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  cameraButtonText: {
-    color: '#fff',
+  secondaryButtonText: {
+    color: '#ff3e55',
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: '600',
   },
   imageContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
     alignItems: 'center',
   },
   image: {
     width: '100%',
     height: 200,
-    borderRadius: 10,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#ff914d',
   },
-  submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+  primaryButton: {
+    backgroundColor: '#ff3e55',
+    borderRadius: 24,
+    paddingVertical: 12,
     alignItems: 'center',
+    marginTop: 4,
+    elevation: 2,
   },
-  submitButtonText: {
+  primaryButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    fontSize: 17,
+    letterSpacing: 1,
   },
 });
 
