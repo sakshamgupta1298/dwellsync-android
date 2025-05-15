@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { ownerService } from '../../services/api';
 import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+import config from '../../config';
+import { commonStyles, screenStyles, scale } from '../../utils/responsiveStyles';
 
-const BACKEND_URL = 'http://10.0.2.2:5000'; // Change this if your backend is running elsewhere
+const BACKEND_URL = config.apiUrl.replace('/api', '');
 
 const OwnerReadingsSection = () => {
   const [readings, setReadings] = useState<any[]>([]);
@@ -24,7 +26,11 @@ const OwnerReadingsSection = () => {
     r => r.meter_type && r.meter_type.toLowerCase() === 'water'
   );
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
+  if (loading) return (
+    <View style={commonStyles.loadingContainer}>
+      <ActivityIndicator size="large" color="#ff3e55" />
+    </View>
+  );
 
   const renderReadingCard = (item: any) => {
     const imageUrl = item.image_path
@@ -34,35 +40,44 @@ const OwnerReadingsSection = () => {
       : null;
 
     return (
-      <View style={styles.readingCard} key={item.id}>
-        <Text style={styles.readingText}>Tenant: {item.tenant_name}</Text>
-        <Text style={styles.readingText}>Value: {item.reading_value}</Text>
-        <Text style={styles.readingText}>Date: {new Date(item.reading_date).toLocaleString()}</Text>
+      <View style={screenStyles.dashboard.card} key={item.id}>
+        <Text style={commonStyles.text}>Tenant: {item.tenant_name}</Text>
+        <Text style={commonStyles.text}>Value: {item.reading_value}</Text>
+        <Text style={commonStyles.text}>Date: {new Date(item.reading_date).toLocaleString()}</Text>
         {imageUrl ? (
-          <TouchableOpacity onPress={() => Linking.openURL(imageUrl)}>
-            <Text style={styles.link}>View Photo</Text>
+          <TouchableOpacity 
+            style={[commonStyles.button, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ff3e55' }]}
+            onPress={() => {
+              Linking.openURL(imageUrl).catch(err => {
+                console.error('Error opening URL:', err);
+                Alert.alert('Error', 'Could not open the photo. Please check the URL or try again.');
+              });
+            }}>
+            <Text style={{ color: '#ff3e55', fontWeight: 'bold', fontSize: scale.font(16) }}>View Photo</Text>
           </TouchableOpacity>
         ) : (
-          <Text style={[styles.readingText, { color: '#888' }]}>No photo</Text>
+          <Text style={[commonStyles.text, { color: '#888' }]}>No photo</Text>
         )}
       </View>
     );
   };
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <Surface style={styles.container}>
-        <ScrollView>
-          <Text style={styles.title}>Electricity Meter Readings</Text>
+    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={{ flex: 1 }}>
+      <Surface style={screenStyles.dashboard.container}>
+        <ScrollView 
+          contentContainerStyle={{ paddingBottom: scale.height(20) }}
+          showsVerticalScrollIndicator={false}>
+          <Text style={[commonStyles.title, { color: '#fff' }]}>Electricity Meter Readings</Text>
           {electricityReadings.length === 0 ? (
-            <Text style={styles.noReadingsText}>No electricity readings found.</Text>
+            <Text style={[commonStyles.text, { color: '#fff' }]}>No electricity readings found.</Text>
           ) : (
             electricityReadings.map(renderReadingCard)
           )}
 
-          <Text style={[styles.title, { marginTop: 24 }]}>Water Meter Readings</Text>
+          <Text style={[commonStyles.title, { color: '#fff', marginTop: scale.height(24) }]}>Water Meter Readings</Text>
           {waterReadings.length === 0 ? (
-            <Text style={styles.noReadingsText}>No water readings found.</Text>
+            <Text style={[commonStyles.text, { color: '#fff' }]}>No water readings found.</Text>
           ) : (
             waterReadings.map(renderReadingCard)
           )}
@@ -71,45 +86,5 @@ const OwnerReadingsSection = () => {
     </LinearGradient>
   );
 };
-
-const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: 'transparent',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-    letterSpacing: 1,
-  },
-  readingCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 4,
-  },
-  readingText: {
-    color: '#222',
-    marginBottom: 4,
-    fontSize: 15,
-  },
-  link: {
-    color: '#ff3e55',
-    fontWeight: 'bold',
-    marginTop: 8,
-  },
-  noReadingsText: {
-    color: '#fff',
-    fontSize: 16,
-    marginBottom: 16,
-  },
-});
 
 export default OwnerReadingsSection;
