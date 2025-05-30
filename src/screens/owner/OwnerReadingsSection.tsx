@@ -18,16 +18,17 @@ const OwnerReadingsSection = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const electricityReadings = readings.filter(
-    r => r.meter_type && r.meter_type.toLowerCase() === 'electricity'
-  );
-  const waterReadings = readings.filter(
-    r => r.meter_type && r.meter_type.toLowerCase() === 'water'
-  );
+  const electricityReadings = Array.isArray(readings) ? readings.filter(
+    r => r && r.meter_type && r.meter_type.toLowerCase() === 'electricity'
+  ) : [];
+  const waterReadings = Array.isArray(readings) ? readings.filter(
+    r => r && r.meter_type && r.meter_type.toLowerCase() === 'water'
+  ) : [];
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
   const renderReadingCard = (item: any) => {
+    if (!item) return null;
     const imageUrl = item.image_path
       ? (item.image_path.startsWith('http')
         ? item.image_path

@@ -55,38 +55,38 @@ const OwnerPaymentsSection = () => {
       <Surface style={styles.container}>
       <Text style={styles.title}>Payments</Text>
       <FlatList
-        data={payments}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
+        data={Array.isArray(payments) ? payments : []}
+        keyExtractor={item => item && item.id ? item.id.toString() : Math.random().toString()}
+        renderItem={({ item }) => item ? (
           <View style={styles.paymentCard}>
-              <Text style={styles.label}>Tenant: <Text style={styles.value}>{item.tenant_name}</Text></Text>
-              <Text style={styles.label}>Amount: <Text style={styles.value}>₹{item.amount}</Text></Text>
-              <Text style={styles.label}>Date: <Text style={styles.value}>{new Date(item.date).toLocaleString()}</Text></Text>
-              <Text style={styles.label}>Status: <Text style={styles.value}>{item.status}</Text></Text>
-              <Text style={styles.label}>Method: <Text style={styles.value}>{item.method}</Text></Text>
-              <Text style={styles.label}>Reference: <Text style={styles.value}>{item.reference || 'N/A'}</Text></Text>
-              {item.status === 'pending' && (
-                <View style={styles.actionRow}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: '#2ecc40' }]}
-                    onPress={() => handleAction(item.id, 'accept')}
-                    disabled={actionLoading === item.id}
-                  >
-                    <Text style={styles.actionButtonText}>Accept</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: '#e74c3c' }]}
-                    onPress={() => handleAction(item.id, 'reject')}
-                    disabled={actionLoading === item.id}
-                  >
-                    <Text style={styles.actionButtonText}>Reject</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+            <Text style={styles.label}>Tenant: <Text style={styles.value}>{item.tenant_name || 'N/A'}</Text></Text>
+            <Text style={styles.label}>Amount: <Text style={styles.value}>₹{item.amount || 'N/A'}</Text></Text>
+            <Text style={styles.label}>Date: <Text style={styles.value}>{item.date ? new Date(item.date).toLocaleString() : 'N/A'}</Text></Text>
+            <Text style={styles.label}>Status: <Text style={styles.value}>{item.status || 'N/A'}</Text></Text>
+            <Text style={styles.label}>Method: <Text style={styles.value}>{item.method || 'N/A'}</Text></Text>
+            <Text style={styles.label}>Reference: <Text style={styles.value}>{item.reference || 'N/A'}</Text></Text>
+            {item.status === 'pending' && (
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: '#2ecc40' }]}
+                  onPress={() => handleAction(item.id, 'accept')}
+                  disabled={actionLoading === item.id}
+                >
+                  <Text style={styles.actionButtonText}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: '#e74c3c' }]}
+                  onPress={() => handleAction(item.id, 'reject')}
+                  disabled={actionLoading === item.id}
+                >
+                  <Text style={styles.actionButtonText}>Reject</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        )}
-          ListEmptyComponent={<Text style={styles.noPaymentsText}>No payments found.</Text>}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ) : null}
+        ListEmptyComponent={<Text style={styles.noPaymentsText}>No payments found.</Text>}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
       </Surface>
     </LinearGradient>
