@@ -55,7 +55,7 @@ const LoginScreen = ({ navigation }: any) => {
               />
             </View>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Login to DwellSync</Text>
+            <Text style={styles.subtitle}>Login to LiveInSync</Text>
             <TextInput
               style={styles.input}
               mode="outlined"

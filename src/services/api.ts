@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.1.7:5000/api'; // Replace with your actual backend URL
-
+const API_URL = 'http://192.168.1.7:3000/api'; // Replace with your actual backend URL
+// const API_URL = 'http://10.0.2.2:8081/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
@@ -30,9 +30,13 @@ export const authService = {
   login: async (tenantId: string, password: string) => {
     try {
       const response = await api.post('/login', { tenant_id: tenantId, password });
+      console.log("response:",response)
       if (response.data.token) {
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        // Debug log to confirm token is saved
+        const savedToken = await AsyncStorage.getItem('token');
+        console.log('Token saved in AsyncStorage:', savedToken);
       }
       return response.data;
     } catch (error) {

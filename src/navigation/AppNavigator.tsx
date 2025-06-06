@@ -13,12 +13,15 @@ import TenantDashboardScreen from '../screens/tenant/DashboardScreen';
 import MeterReadingScreen from '../screens/tenant/MeterReadingScreen';
 import PaymentHistoryScreen from '../screens/tenant/PaymentHistoryScreen';
 import TenantProfileScreen from '../screens/tenant/ProfileScreen';
+import { MaintenanceRequestScreen } from '../screens/tenant/MaintenanceRequestScreen';
+import MaintenanceHistoryScreen from '../screens/tenant/MaintenanceHistoryScreen';
 
 // Owner Screens
 import OwnerDashboardScreen from '../screens/owner/DashboardScreen';
 import TenantManagementScreen from '../screens/owner/TenantManagementScreen';
 import BillManagementScreen from '../screens/owner/BillManagementScreen';
 import PaymentTrackingScreen from '../screens/owner/PaymentTrackingScreen';
+import { MaintenanceRequestsScreen } from '../screens/owner/MaintenanceRequestsScreen';
 
 import LandingScreen from '../screens/LandingScreen';
 
@@ -49,6 +52,18 @@ const AppNavigator = () => {
             <Stack.Screen name="TenantManagement" component={TenantManagementScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="BillManagement" component={BillManagementScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="PaymentTracking" component={PaymentTrackingScreen} options={{ headerShown: false }}/>
+            <Stack.Screen 
+              name="MaintenanceRequests" 
+              component={MaintenanceRequestsScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Maintenance Requests',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerTintColor: '#000',
+              }}
+            />
           </>
         ) : (
           // Tenant Stack
@@ -57,6 +72,30 @@ const AppNavigator = () => {
             <Stack.Screen name="MeterReading" component={MeterReadingScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} options={{ headerShown: false }} />
             <Stack.Screen name="TenantProfile" component={TenantProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen 
+              name="MaintenanceRequest" 
+              component={MaintenanceRequestScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Submit Maintenance Request',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerTintColor: '#000',
+              }}
+            />
+            <Stack.Screen 
+              name="MaintenanceHistory" 
+              component={MaintenanceHistoryScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Maintenance History',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerTintColor: '#000',
+              }}
+            />
           </>
         )}
       </Stack.Navigator>

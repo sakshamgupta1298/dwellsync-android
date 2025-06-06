@@ -7,6 +7,7 @@ import OwnerOverviewSection from './OwnerOverviewSection';
 import OwnerReadingsSection from './OwnerReadingsSection';
 import OwnerPaymentsSection from './OwnerPaymentsSection';
 import OwnerTenantsSection from './OwnerTenantsSection';
+import { MaintenanceRequestsScreen } from './MaintenanceRequestsScreen';
 
 const initialLayout = { width: Dimensions.get('window').width };
 
@@ -19,6 +20,7 @@ const OwnerDashboardScreen = () => {
     { key: 'readings', title: 'Meter Readings' },
     { key: 'payments', title: 'Payments' },
     { key: 'tenants', title: 'Tenants' },
+    { key: 'maintenance', title: 'Maintenance' },
   ]);
 
   const renderScene = SceneMap({
@@ -26,6 +28,7 @@ const OwnerDashboardScreen = () => {
     readings: OwnerReadingsSection,
     payments: OwnerPaymentsSection,
     tenants: OwnerTenantsSection,
+    maintenance: MaintenanceRequestsScreen,
   });
 
   return (
@@ -41,6 +44,7 @@ const OwnerDashboardScreen = () => {
           style={{ backgroundColor: '#fff' }}
           activeColor="#ff3e55"
           inactiveColor="#000"
+          scrollEnabled={true}
         />
       )}
     />

@@ -84,7 +84,7 @@ const OwnerRegisterScreen = ({ navigation }: any) => {
               />
             </View>
             <Text style={styles.title}>Owner Registration</Text>
-            <Text style={styles.subtitle}>Create your DwellSync account</Text>
+            <Text style={styles.subtitle}>Create your LiveInSync account</Text>
             <TextInput
               style={styles.input}
               mode="outlined"

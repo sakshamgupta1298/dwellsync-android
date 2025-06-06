@@ -15,6 +15,8 @@ import { useAuth } from '../../utils/AuthContext';
 import { tenantService } from '../../services/api';
 import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+import { maintenanceService } from '../../services/maintenanceService';
+import { MaintenanceRequest } from '../../types/maintenance';
 
 const DashboardScreen = ({ navigation }: any) => {
   // Hide the navigation header
@@ -26,6 +28,7 @@ const DashboardScreen = ({ navigation }: any) => {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
 
   const fetchDashboardData = async () => {
     try {
@@ -42,6 +45,7 @@ const DashboardScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     fetchDashboardData();
+    maintenanceService.getTenantRequests().then(setMaintenanceRequests);
   }, []);
 
   const onRefresh = () => {
@@ -162,11 +166,34 @@ const DashboardScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </Surface>
 
-      <TouchableOpacity
-        style={styles.historyButton}
-        onPress={() => navigation.navigate('PaymentHistory')}>
-        <Text style={styles.historyButtonText}>View Payment History</Text>
-      </TouchableOpacity>
+        {/* Maintenance Request Card */}
+        <Surface style={styles.card}>
+          <Text style={styles.cardTitle}>Maintenance</Text>
+          <Text style={styles.maintenanceText}>
+            Need something fixed? Submit a maintenance request and we'll take care of it.
+          </Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('MaintenanceRequest')}>
+            <Text style={styles.secondaryButtonText}>Submit Maintenance Request</Text>
+          </TouchableOpacity>
+        </Surface>
+
+        <Surface style={styles.card}>
+          <Text style={styles.cardTitle}>Your Maintenance Requests</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('MaintenanceHistory')}
+          >
+            <Text style={styles.secondaryButtonText}>View Maintenance Requests</Text>
+          </TouchableOpacity>
+        </Surface>
+
+        <TouchableOpacity
+          style={styles.historyButton}
+          onPress={() => navigation.navigate('PaymentHistory')}>
+          <Text style={styles.historyButtonText}>View Payment History</Text>
+        </TouchableOpacity>
     </ScrollView>
     </LinearGradient>
   );
@@ -327,6 +354,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
+  },
+  maintenanceText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  maintenanceHistoryCard: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 8,
+  },
+  maintenanceHistoryTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 
