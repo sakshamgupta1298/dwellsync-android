@@ -21,7 +21,7 @@ const LandingScreen = ({ navigation }: any) => {
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.title}>DwellSync</Text>
+        <Text style={styles.title}>LiveInSync</Text>
         <Text style={styles.tagline}>Smart. Simple. Seamless Rent Management.</Text>
         <Text style={styles.subtitle}>
           Manage your rental journey with ease. For tenants & owners.

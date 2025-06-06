@@ -5,7 +5,7 @@ export const config = {
   },
   // Production
   production: {
-    apiUrl: 'http://192.168.1.7:5000/api', // Replace with your computer's local IP address
+    apiUrl: 'http://192.168.1.7:3000/api', // Replace with your computer's local IP address
   },
 };
 
