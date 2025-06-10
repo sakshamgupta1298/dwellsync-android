@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.1.7:3000/api'; // Replace with your actual backend URL
+const API_URL = 'http://www.liveinsync.in:3000/api'; // Replace with your actual backend URL
 // const API_URL = 'http://10.0.2.2:8081/api';
 // Create axios instance
 const api = axios.create({
