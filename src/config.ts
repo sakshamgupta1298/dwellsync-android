@@ -5,7 +5,7 @@ export const config = {
   },
   // Production
   production: {
-    apiUrl: 'http://www.liveinsync.in:3000/api', // Replace with your DigitalOcean droplet IP or domain
+    apiUrl: 'http://liveinsync.in:5000/api', // Replace with your DigitalOcean droplet IP or domain
   },
 };
 

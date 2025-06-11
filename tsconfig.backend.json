@@ -3,7 +3,7 @@
     "target": "es2018",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./src/server",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -11,15 +11,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "jsx": "react-native",
-    "lib": ["es2018", "dom"],
+    "lib": ["es2018"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
-    "noImplicitAny": false,
-    "paths": {
-      "*": ["node_modules/*"]
-    }
+    "noImplicitAny": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/server/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]
-}
+} 

@@ -19,9 +19,12 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     is_owner = db.Column(db.Boolean, default=False)
     rent_amount = db.Column(db.Float, nullable=False, default=0.0)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # For tenants, this links to their owner
     meter_readings = db.relationship('MeterReading', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Relationship for owner to access their tenants
+    tenants = db.relationship('User', backref=db.backref('owner', remote_side=[id]), lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
