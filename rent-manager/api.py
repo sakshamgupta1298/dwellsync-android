@@ -153,7 +153,7 @@ def get_water_bill(current_user):
         return jsonify({'error': 'No water bill set yet'}), 404
 
     # Calculate amount per tenant based on owner's total tenants
-    amount_per_tenant = bill.total_amount / total_tenants + 1 if total_tenants > 0 else 0
+    amount_per_tenant = bill.total_amount / total_tenants  if total_tenants > 0 else 0
 
     return jsonify({
         'amount_per_tenant': amount_per_tenant,
@@ -194,7 +194,12 @@ def get_owner_payments(current_user):
     if not current_user.is_owner:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    payments = Payment.query.order_by(Payment.payment_date.desc()).all()
+    # Get all tenants belonging to this owner
+    owner_tenants = User.query.filter_by(owner_id=current_user.id).all()
+    tenant_ids = [tenant.id for tenant in owner_tenants]
+
+    # Get payments only for owner's tenants
+    payments = Payment.query.filter(Payment.user_id.in_(tenant_ids)).order_by(Payment.payment_date.desc()).all()
     payments_data = []
     for p in payments:
         tenant = User.query.get(p.user_id)
@@ -752,7 +757,14 @@ def create_maintenance_request(current_user):
 def get_all_maintenance_requests(current_user):
     if not current_user.is_owner:
         return jsonify({'error': 'Unauthorized'}), 403
-    requests = MaintenanceRequest.query.order_by(MaintenanceRequest.created_at.desc()).all()
+
+    # Get all tenants belonging to this owner
+    owner_tenants = User.query.filter_by(owner_id=current_user.id).all()
+    tenant_ids = [tenant.id for tenant in owner_tenants]
+
+    # Get maintenance requests only for owner's tenants
+    requests = MaintenanceRequest.query.filter(MaintenanceRequest.tenant_id.in_(tenant_ids)).order_by(MaintenanceRequest.created_at.desc()).all()
+    
     return jsonify([{
         'id': r.id,
         'tenantId': r.tenant_id,
