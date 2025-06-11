@@ -339,6 +339,9 @@ def tenant_dashboard(current_user):
     owner = User.query.get(current_user.owner_id)
     current_rate = OwnerElectricityRate.query.filter_by(owner_id=owner.id).order_by(OwnerElectricityRate.effective_from.desc()).first()
     
+    # Get total tenants for this owner
+    total_tenants = User.query.filter_by(owner_id=owner.id, is_owner=False).count()
+    
     # Get the latest readings
     latest_electricity_reading = MeterReading.query.filter_by(
         user_id=current_user.id, meter_type='electricity'
