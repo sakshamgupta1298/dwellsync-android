@@ -7,7 +7,9 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc -p tsconfig.backend.json",
+    "start:prod": "node dist/index.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",

@@ -12,7 +12,7 @@ class SocketService {
     const token = getToken();
     if (!token) return;
 
-    this.socket = io('http://www.liveinsync.in:3000', {
+    this.socket = io('http://liveinsync.in', {
       auth: {
         token,
       },

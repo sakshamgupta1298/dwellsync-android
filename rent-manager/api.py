@@ -63,7 +63,7 @@ def owner_dashboard(current_user):
     if not current_user.is_owner:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    tenants = User.query.filter_by(is_owner=False).all()
+    tenants = User.query.filter_by(owner_id=current_user.id).all()
     total_tenants = len(tenants)
     total_rent = sum(t.rent_amount for t in tenants)
     total_payments = Payment.query.filter(Payment.status == 'completed').count()
@@ -71,14 +71,16 @@ def owner_dashboard(current_user):
 
     payments_data = []
     for p in recent_payments:
-        payments_data.append({
-            'id': p.id,
-            'tenant': User.query.get(p.user_id).name if User.query.get(p.user_id) else "Unknown",
-            'amount': p.amount,
-            'date': p.payment_date.isoformat(),
-            'status': p.status,
-            'method': p.payment_method,
-        })
+        tenant = User.query.get(p.user_id)
+        if tenant and tenant.owner_id == current_user.id:  # Only include payments from owner's tenants
+            payments_data.append({
+                'id': p.id,
+                'tenant': tenant.name if tenant else "Unknown",
+                'amount': p.amount,
+                'date': p.payment_date.isoformat(),
+                'status': p.status,
+                'method': p.payment_method,
+            })
 
     return jsonify({
         'total_tenants': total_tenants,
@@ -202,7 +204,7 @@ def get_owner_tenants(current_user):
     if not current_user.is_owner:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    tenants = User.query.filter_by(is_owner=False).all()
+    tenants = User.query.filter_by(owner_id=current_user.id).all()
     tenants_data = []
     for t in tenants:
         tenants_data.append({
@@ -252,7 +254,7 @@ def login():
             }
         })
     
-    return jsonify({'error': 'Invalid credentials'}),
+    return jsonify({'error': 'Invalid credentials'})
 
 @app.route('/api/submit_reading', methods=['POST'])
 @token_required
@@ -567,7 +569,8 @@ def register_tenant(current_user):
         tenant_id=tenant_id,
         name=name,
         rent_amount=rent_amount,
-        is_owner=False
+        is_owner=False,
+        owner_id=current_user.id  # Set the owner_id to the current owner's ID
     )
     tenant.set_password(password)
     
