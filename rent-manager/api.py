@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest
+from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -101,11 +101,30 @@ def set_electricity_rate(current_user):
         return jsonify({'error': 'Missing rate'}), 400
 
     from datetime import datetime
-    new_rate = ElectricityRate(rate_per_unit=rate, effective_from=datetime.utcnow())
-    #print("new_rate:", rate, flush=True)
+    new_rate = OwnerElectricityRate(
+        owner_id=current_user.id,
+        rate_per_unit=rate,
+        effective_from=datetime.utcnow()
+    )
     db.session.add(new_rate)
     db.session.commit()
     return jsonify({'message': 'Rate updated successfully'}), 200
+
+@app.route('/api/owner/electricity_rate', methods=['GET'])
+@token_required
+def get_electricity_rate(current_user):
+    if not current_user.is_owner:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Get the latest rate for this owner
+    rate = OwnerElectricityRate.query.filter_by(owner_id=current_user.id).order_by(OwnerElectricityRate.effective_from.desc()).first()
+    if not rate:
+        return jsonify({'error': 'No rate set yet'}), 404
+
+    return jsonify({
+        'rate_per_unit': rate.rate_per_unit,
+        'effective_from': rate.effective_from.isoformat()
+    })
 
 @app.route('/api/update_rate', methods=['POST'])
 @token_required  # Ensure only owners can access
@@ -313,11 +332,12 @@ def submit_reading(current_user):
 @app.route('/api/tenant/dashboard', methods=['GET'])
 @token_required
 def tenant_dashboard(current_user):
-    tenants = User.query.filter_by(is_owner=False).all()
-    total_tenants = len(tenants)
-    #print("Total_tenants:", total_tenants, flush=True)
     if current_user.is_owner:
         return jsonify({'error': 'Owner account cannot access tenant dashboard'}), 403
+    
+    # Get the owner's current electricity rate
+    owner = User.query.get(current_user.owner_id)
+    current_rate = OwnerElectricityRate.query.filter_by(owner_id=owner.id).order_by(OwnerElectricityRate.effective_from.desc()).first()
     
     # Get the latest readings
     latest_electricity_reading = MeterReading.query.filter_by(
@@ -340,30 +360,17 @@ def tenant_dashboard(current_user):
         MeterReading.reading_date < (latest_water_reading.reading_date if latest_water_reading else None)
     ).order_by(MeterReading.reading_date.desc()).first() if latest_water_reading else None
 
-    # Get current rates
-    current_rate = ElectricityRate.query.order_by(ElectricityRate.effective_from.desc()).first()
-    
     # Calculate bills
     electricity_bill = 0
     if latest_electricity_reading and electricity_previous and current_rate:
-        #print("latest_electricity:", latest_electricity_reading.reading_value, flush=True)
-        #print("previous_electricity:", electricity_previous.reading_value, flush=True)
         consumption = latest_electricity_reading.reading_value - electricity_previous.reading_value
-        #print("consumption:", consumption, flush=True)
-        #print("current_rate:", current_rate.rate_per_unit, flush=True)
         electricity_bill = consumption * current_rate.rate_per_unit
-        #print("electricity_bill:", electricity_bill, flush=True)
         electricity_bill = round(electricity_bill, 2)
     
     water_bill_amount = 0
     if latest_water_reading and water_previous and current_rate:
-        #print("latest_water:", latest_water_reading.reading_value, flush=True)
-        #print("previous_water:", water_previous.reading_value, flush=True)
         consumption = latest_water_reading.reading_value - water_previous.reading_value
-        #print("consumption:", consumption, flush=True)
-        #print("current_rate:", current_rate.rate_per_unit, flush=True)
         water_bill_amount = (consumption / (total_tenants + 1)) * current_rate.rate_per_unit
-        #print("water_bill:", water_bill_amount, flush=True)
         water_bill_amount = round(water_bill_amount, 2)
 
     # Prepare dashboard data
@@ -461,41 +468,35 @@ def create_payment(current_user):
     electricity_cost = 0
     water_cost = 0
 
+    # Get the owner's current electricity rate
+    owner = User.query.get(current_user.owner_id)
+    current_rate = OwnerElectricityRate.query.filter_by(owner_id=owner.id).order_by(OwnerElectricityRate.effective_from.desc()).first()
+
     # --- Electricity Bill Calculation ---
     latest_electricity = MeterReading.query.filter_by(
         user_id=current_user.id,
         meter_type='electricity'
     ).order_by(MeterReading.reading_date.desc()).first()
 
-    current_rate = ElectricityRate.query.order_by(ElectricityRate.effective_from.desc()).first()
-    # #print("currant_rate:", current_rate.rate_per_unit, flush=True)
-
     if latest_electricity and current_rate:
         previous_electricity = MeterReading.query.filter(
-        MeterReading.user_id == current_user.id,
-        MeterReading.meter_type == 'electricity',
-        MeterReading.reading_date < latest_electricity.reading_date
-    ).order_by(MeterReading.reading_date.desc()).first()
+            MeterReading.user_id == current_user.id,
+            MeterReading.meter_type == 'electricity',
+            MeterReading.reading_date < latest_electricity.reading_date
+        ).order_by(MeterReading.reading_date.desc()).first()
 
-    if previous_electricity:
-        # Correct: (current - previous) * rate per unit
-        # #print("latest_electricity:",latest_electricity.reading_value, flush=True)
-        # #print("previous_water:",previous_electricity.reading_value, flush=True)
-        consumption = latest_electricity.reading_value - previous_electricity.reading_value
-        # #print("consumption:",consumption, flush=True)
-        electricity_cost = consumption * current_rate.rate_per_unit
-        # #print("current_rate:",current_rate.rate_per_unit, flush=True)
-        # #print("electricity_cost:", electricity_cost, flush=True)
-        total_amount += electricity_cost
+        if previous_electricity:
+            consumption = latest_electricity.reading_value - previous_electricity.reading_value
+            electricity_cost = consumption * current_rate.rate_per_unit
+            total_amount += electricity_cost
+
     # --- Water Bill Calculation ---
     latest_water = MeterReading.query.filter_by(
         user_id=current_user.id,
         meter_type='water'
     ).order_by(MeterReading.reading_date.desc()).first()
 
-    water_rate = ElectricityRate.query.order_by(ElectricityRate.effective_from.desc()).first()  # Make sure you have this model
-    #print("water_rate:",water_rate.rate_per_unit, flush= True)
-    if latest_water and water_rate:
+    if latest_water and current_rate:
         previous_water = MeterReading.query.filter(
             MeterReading.user_id == current_user.id,
             MeterReading.meter_type == 'water',
@@ -503,13 +504,9 @@ def create_payment(current_user):
         ).order_by(MeterReading.reading_date.desc()).first()
 
         if previous_water:
-            total_tenants = User.query.filter_by(is_owner=False).count()
-            # ((last meter reading - current meter reading) / (total_tenants + 1)) * rate per unit
-            # #print("latest_water:",latest_water.reading_value, flush=True)
-            # #print("previous_water:",previous_water.reading_value, flush=True)
+            total_tenants = User.query.filter_by(owner_id=owner.id, is_owner=False).count()
             water_consumption = latest_water.reading_value - previous_water.reading_value
-            water_cost = (water_consumption / (total_tenants + 1)) * water_rate.rate_per_unit
-            # #print("water_cost:",water_cost, flush=True)
+            water_cost = (water_consumption / (total_tenants + 1)) * current_rate.rate_per_unit
             total_amount += water_cost
 
     # Create payment record
@@ -553,6 +550,7 @@ def create_payment(current_user):
             'amount': total_amount,
             'message': f'Please use reference {reference} when making the payment'
         })
+
 def generate_tenant_password(length=8):
     """Generate a random password for tenant"""
     characters = string.ascii_letters + string.digits + string.punctuation
