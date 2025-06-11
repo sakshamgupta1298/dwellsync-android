@@ -167,7 +167,12 @@ def get_owner_meter_readings(current_user):
     if not current_user.is_owner:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    readings = MeterReading.query.order_by(MeterReading.reading_date.desc()).all()
+    # Get all tenants belonging to this owner
+    owner_tenants = User.query.filter_by(owner_id=current_user.id).all()
+    tenant_ids = [tenant.id for tenant in owner_tenants]
+
+    # Get readings only for owner's tenants
+    readings = MeterReading.query.filter(MeterReading.user_id.in_(tenant_ids)).order_by(MeterReading.reading_date.desc()).all()
     readings_data = []
     for r in readings:
         tenant = User.query.get(r.user_id)
@@ -180,7 +185,6 @@ def get_owner_meter_readings(current_user):
             'reading_date': r.reading_date.isoformat() if r.reading_date else None,
             'image_path': r.image_path,
         })
-        #print("reading_data:",readings_data, flush=True)
 
     return jsonify(readings_data)
 
