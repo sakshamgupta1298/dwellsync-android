@@ -96,8 +96,15 @@ class ElectricityRate(db.Model):
     rate_per_unit = db.Column(db.Float, nullable=False)
     effective_from = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    
+
+class OwnerElectricityRate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rate_per_unit = db.Column(db.Float, nullable=False)
+    effective_from = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    owner = db.relationship('User', backref='electricity_rates')
 
 class WaterBill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
