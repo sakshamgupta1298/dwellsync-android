@@ -31,7 +31,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['DEBUG'] = True  # Enable debug mode
 
 # Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_SERVER'] = 'smtpout.secureserver.net'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
