@@ -57,14 +57,27 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
   };
 
   const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
     setForgotLoading(true);
     try {
-      await ownerService.forgotPassword(forgotEmail);
-      Alert.alert('Success', 'Password reset instructions sent to your email.');
-      setForgotVisible(false);
-      setForgotEmail('');
-    } catch (e) {
-      Alert.alert('Error', 'Failed to send reset email');
+      const response = await ownerService.forgotPassword(forgotEmail);
+      console.log('Forgot password response:', response);
+      if (response.message) {
+        Alert.alert('Success', response.message);
+        setForgotVisible(false);
+        setForgotEmail('');
+      } else {
+        Alert.alert('Error', 'Unexpected response from server');
+      }
+    } catch (e: any) {
+      console.error('Forgot password error:', e);
+      Alert.alert(
+        'Error',
+        e.response?.data?.error || 'Failed to send reset email. Please try again.'
+      );
     } finally {
       setForgotLoading(false);
     }
