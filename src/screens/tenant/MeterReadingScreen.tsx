@@ -10,11 +10,19 @@ import {
   Image,
   StatusBar,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { launchCamera } from 'react-native-image-picker';
 import { tenantService } from '../../services/api';
 import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const MeterReadingScreen = ({ navigation }: any) => {
   // Hide the navigation header
@@ -81,8 +89,8 @@ const MeterReadingScreen = ({ navigation }: any) => {
   };
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 40 }}>
         {/* Back Button */}
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -94,10 +102,12 @@ const MeterReadingScreen = ({ navigation }: any) => {
           <TextInput
             style={styles.input}
             placeholder="Enter electricity meter reading"
-            placeholderTextColor="#bbb"
+            placeholderTextColor={NETFLIX_GRAY}
             value={electricityValue}
             onChangeText={setElectricityValue}
             keyboardType="numeric"
+            selectionColor={NETFLIX_RED}
+            underlineColorAndroid={NETFLIX_RED}
           />
           <TouchableOpacity style={styles.secondaryButton} onPress={() => takePhoto('electricity')}>
             <Text style={styles.secondaryButtonText}>{electricityImageUri ? 'Retake Photo' : 'Take Photo'}</Text>
@@ -125,10 +135,12 @@ const MeterReadingScreen = ({ navigation }: any) => {
           <TextInput
             style={styles.input}
             placeholder="Enter water meter reading"
-            placeholderTextColor="#bbb"
+            placeholderTextColor={NETFLIX_GRAY}
             value={waterValue}
             onChangeText={setWaterValue}
             keyboardType="numeric"
+            selectionColor={NETFLIX_RED}
+            underlineColorAndroid={NETFLIX_RED}
           />
           <TouchableOpacity style={styles.secondaryButton} onPress={() => takePhoto('water')}>
             <Text style={styles.secondaryButtonText}>{waterImageUri ? 'Retake Photo' : 'Take Photo'}</Text>
@@ -151,93 +163,102 @@ const MeterReadingScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </Surface>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 18,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 18,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    elevation: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    elevation: 0,
   },
   backButtonText: {
-    color: '#ff3e55',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 22,
-    elevation: 5,
-    shadowColor: '#ff3e55',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    backgroundColor: NETFLIX_CARD,
+    borderRadius: 24,
+    padding: width * 0.05,
+    marginBottom: width * 0.06,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   cardTitle: {
-    color: '#ff3e55',
+    color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 18,
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 18,
-    fontSize: 16,
-    color: '#333',
+    backgroundColor: '#181818',
+    padding: width * 0.04,
+    borderRadius: 16,
+    marginBottom: width * 0.045,
+    fontSize: Math.max(14, width * 0.045),
+    color: '#fff',
+    borderWidth: 1,
+    borderColor: '#232323',
   },
   secondaryButton: {
-    backgroundColor: '#fff',
-    borderColor: '#ff3e55',
+    backgroundColor: 'transparent',
+    borderColor: NETFLIX_RED,
     borderWidth: 2,
-    borderRadius: 24,
+    borderRadius: 32,
     paddingVertical: 10,
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
   secondaryButtonText: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     fontSize: 16,
   },
-  imageContainer: {
-    marginBottom: 18,
-    alignItems: 'center',
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#ff914d',
-  },
   primaryButton: {
-    backgroundColor: '#ff3e55',
-    borderRadius: 24,
+    backgroundColor: NETFLIX_RED,
+    borderRadius: 32,
     paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 4,
-    elevation: 2,
+    marginTop: 8,
+    marginBottom: 2,
+    elevation: 0,
+    width: '100%',
+    alignSelf: 'center',
   },
   primaryButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 17,
     letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  image: {
+    width: 180,
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: NETFLIX_RED,
   },
 });
 

@@ -8,18 +8,35 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Modal,
+  TouchableOpacity,
 } from 'react-native';
 import { Text, TextInput, Button, Surface } from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAuth } from '../../utils/AuthContext';
+import GradientBackground from '../GradientBackground';
+import { ownerService } from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
-const LoginScreen = ({ navigation }: any) => {
+interface LoginScreenProps {
+  navigation: any;
+  showRegister?: boolean;
+}
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
   const [tenantId, setTenantId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const [forgotVisible, setForgotVisible] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!tenantId || !password) {
@@ -39,14 +56,28 @@ const LoginScreen = ({ navigation }: any) => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setForgotLoading(true);
+    try {
+      await ownerService.forgotPassword(forgotEmail);
+      Alert.alert('Success', 'Password reset instructions sent to your email.');
+      setForgotVisible(false);
+      setForgotEmail('');
+    } catch (e) {
+      Alert.alert('Error', 'Failed to send reset email');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.container}>
-          <Surface style={styles.card} elevation={4}>
+          <Surface style={styles.card} elevation={1}>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../assets/logo.png')}
@@ -58,56 +89,104 @@ const LoginScreen = ({ navigation }: any) => {
             <Text style={styles.subtitle}>Login to LiveInSync</Text>
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Tenant ID or Email"
               value={tenantId}
+              textColor='#fff'
               onChangeText={setTenantId}
               autoCapitalize="none"
               keyboardType="email-address"
-              // left={<TextInput.Icon icon="account" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Password"
+              textColor='#fff'
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              // left={<TextInput.Icon icon="lock" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
+            <TouchableOpacity onPress={() => setForgotVisible(true)} style={{ alignSelf: 'flex-end', marginBottom: 12 }}>
+              <Text style={{ color: NETFLIX_RED, fontWeight: 'bold' }}>Forgot Password?</Text>
+            </TouchableOpacity>
             <Button
               mode="contained"
               style={styles.loginButton}
-              contentStyle={{ paddingVertical: 10 }}
-              labelStyle={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}
+              contentStyle={{ paddingVertical: 12 }}
+              labelStyle={styles.loginButtonLabel}
               onPress={handleLogin}
               disabled={loading}
             >
-              {loading ? <ActivityIndicator color="#000" /> : 'Login'}
+              {loading ? <ActivityIndicator color="#fff" /> : 'Login'}
             </Button>
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Don't have an account?</Text>
-              <Button
-                mode="text"
-                labelStyle={styles.registerLink}
-                onPress={() => navigation.navigate('OwnerRegister')}
-              >
-                Register as Owner
-              </Button>
-            </View>
+            {showRegister && (
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>Don't have an account?</Text>
+                <Button
+                  mode="text"
+                  labelStyle={styles.registerLink}
+                  onPress={() => navigation.navigate('OwnerRegister')}
+                >
+                  Register as Owner
+                </Button>
+              </View>
+            )}
           </Surface>
         </View>
+        <Modal visible={forgotVisible} transparent animationType="slide">
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(20,20,20,0.92)' }}>
+            <View style={{ backgroundColor: NETFLIX_CARD, padding: 24, borderRadius: 16, width: '85%' }}>
+              <Text style={{ color: '#fff', fontSize: 18, marginBottom: 12, fontWeight: 'bold', textAlign: 'center' }}>Reset Password</Text>
+              <TextInput
+                style={{ backgroundColor: '#181818', color: '#fff', borderRadius: 8, padding: 12, marginBottom: 16 }}
+                placeholder="Enter your email"
+                placeholderTextColor={NETFLIX_GRAY}
+                value={forgotEmail}
+                onChangeText={setForgotEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                style={{ backgroundColor: NETFLIX_RED, borderRadius: 24, padding: 12, alignItems: 'center' }}
+                onPress={handleForgotPassword}
+                disabled={forgotLoading}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{forgotLoading ? 'Sending...' : 'Send Reset Link'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setForgotVisible(false)} style={{ marginTop: 16 }}>
+                <Text style={{ color: NETFLIX_GRAY, textAlign: 'center' }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -118,17 +197,23 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: 24,
-    padding: 28,
+    padding: 32,
     alignItems: 'center',
-    backgroundColor: '#fff',
-    elevation: 4,
+    backgroundColor: NETFLIX_CARD,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
   },
   logoContainer: {
     marginBottom: 18,
-    backgroundColor: '#fff',
+    backgroundColor: NETFLIX_CARD,
     borderRadius: 100,
     padding: 12,
-    elevation: 4,
+    elevation: 0,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -141,41 +226,50 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: '#fff',
     marginBottom: 4,
     textAlign: 'center',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 16,
-    color: '#ff914d',
+    color: NETFLIX_GRAY,
     marginBottom: 24,
     textAlign: 'center',
     fontWeight: '600',
   },
   input: {
     width: '100%',
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    marginBottom: 18,
+    backgroundColor: NETFLIX_CARD,
+    color: '#fff',
   },
   loginButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 32,
     marginTop: 8,
     marginBottom: 8,
-    backgroundColor: '#fff',
-    elevation: 2,
+    backgroundColor: NETFLIX_RED,
+    elevation: 0,
+    alignSelf: 'center',
+  },
+  loginButtonLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   registerContainer: {
     marginTop: 10,
     alignItems: 'center',
   },
   registerText: {
-    color: '#666',
+    color: NETFLIX_GRAY,
     fontSize: 15,
   },
   registerLink: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     fontSize: 16,
     marginTop: 2,

@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, StatusBar, Dimensions } from 'react-native';
 import { maintenanceService } from '../../services/maintenanceService';
 import { MaintenanceRequest, MaintenanceStatus } from '../../types/maintenance';
 import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const MaintenanceHistoryScreen = () => {
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
@@ -143,18 +150,18 @@ const MaintenanceHistoryScreen = () => {
 
   if (loading) {
     return (
-      <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-        <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+      <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+        <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
       <View style={styles.container}>
         <Text style={styles.header}>Your Maintenance Requests</Text>
         <FlatList
@@ -164,85 +171,89 @@ const MaintenanceHistoryScreen = () => {
           ListEmptyComponent={<Text style={styles.empty}>No maintenance requests found.</Text>}
         />
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     padding: 16,
   },
   header: {
-    fontSize: 24,
+    fontSize: Math.max(18, width * 0.07),
     fontWeight: 'bold',
     marginBottom: 16,
     color: '#fff',
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 22,
-    elevation: 5,
-    shadowColor: '#ff3e55',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    backgroundColor: NETFLIX_CARD,
+    borderRadius: 24,
+    padding: width * 0.05,
+    marginBottom: width * 0.06,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
     marginBottom: 8,
   },
   status: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   date: {
     fontSize: 14,
-    color: '#888',
+    color: NETFLIX_GRAY,
     marginBottom: 8,
-  },
-  button: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
   approved: {
     fontSize: 14,
     color: '#2ecc71',
+    marginBottom: 8,
+  },
+  button: {
+    borderRadius: 32,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
     marginTop: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   loadingContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
-    color: '#fff',
     fontSize: 18,
+    color: '#fff',
   },
   empty: {
-    marginTop: 40,
     textAlign: 'center',
-    color: '#fff',
+    color: NETFLIX_GRAY,
+    marginTop: 20,
+    fontSize: 16,
   },
 });
 

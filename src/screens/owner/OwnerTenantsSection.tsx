@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Dimensions, RefreshControl } from 'react-native';
 import { ownerService } from '../../services/api';
-import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const OwnerTenantsSection = () => {
   const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchTenants = () => {
     setLoading(true);
@@ -15,6 +22,14 @@ const OwnerTenantsSection = () => {
       .then(setTenants)
       .catch(e => Alert.alert('Error', e.response?.data?.error || 'Failed to load tenants'))
       .finally(() => setLoading(false));
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    ownerService.getTenants()
+      .then(setTenants)
+      .catch(e => Alert.alert('Error', e.response?.data?.error || 'Failed to load tenants'))
+      .finally(() => setRefreshing(false));
   };
 
   useEffect(() => {
@@ -50,7 +65,7 @@ const OwnerTenantsSection = () => {
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
       <Surface style={styles.container}>
         <Text style={styles.title}>Tenants</Text>
         <FlatList
@@ -72,16 +87,16 @@ const OwnerTenantsSection = () => {
             </View>
           )}
           ListEmptyComponent={<Text style={styles.noTenantsText}>No tenants found.</Text>}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       </Surface>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     padding: 16,
@@ -95,39 +110,54 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   tenantCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 4,
+    backgroundColor: NETFLIX_CARD,
+    padding: width * 0.05,
+    borderRadius: 24,
+    marginBottom: width * 0.045,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   tenantName: {
     fontWeight: 'bold',
-    fontSize: 18,
-    color: '#ff3e55',
+    fontSize: 20,
+    color: '#fff',
     marginBottom: 4,
   },
   label: {
-    color: '#ff3e55',
+    color: NETFLIX_GRAY,
     fontWeight: 'bold',
+    fontSize: 15,
   },
   value: {
-    color: '#333',
+    color: '#fff',
     fontWeight: 'normal',
+    fontSize: 15,
   },
   deleteButton: {
-    backgroundColor: '#e74c3c',
-    borderRadius: 8,
-    padding: 10,
+    backgroundColor: NETFLIX_RED,
+    borderRadius: 32,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
+    alignSelf: 'flex-start',
   },
   deleteButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
+    textTransform: 'uppercase',
   },
   noTenantsText: {
-    color: '#fff',
+    color: NETFLIX_GRAY,
     fontSize: 16,
     marginTop: 20,
     textAlign: 'center',

@@ -10,10 +10,14 @@ import {
   Image,
 } from 'react-native';
 import { Text, TextInput, Button, Surface } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { useAuth } from '../../utils/AuthContext';
 
 const { width } = Dimensions.get('window');
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
 
 const OwnerRegisterScreen = ({ navigation }: any) => {
   const [name, setName] = useState('');
@@ -54,7 +58,7 @@ const OwnerRegisterScreen = ({ navigation }: any) => {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Login'),
+            onPress: () => navigation.navigate('OwnerLogin'),
           },
         ]
       );
@@ -69,13 +73,13 @@ const OwnerRegisterScreen = ({ navigation }: any) => {
   };
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.container}>
-          <Surface style={styles.card} elevation={4}>
+          <Surface style={styles.card} elevation={1}>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../assets/logo.png')}
@@ -87,61 +91,101 @@ const OwnerRegisterScreen = ({ navigation }: any) => {
             <Text style={styles.subtitle}>Create your LiveInSync account</Text>
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Full Name"
               value={name}
+              textColor='#fff'
               onChangeText={setName}
               autoCapitalize="words"
-              // left={<TextInput.Icon icon="account" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Email"
               value={email}
+              textColor='#fff'
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              // left={<TextInput.Icon icon="email" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Password"
               value={password}
+              textColor='#fff'
               onChangeText={setPassword}
               secureTextEntry
-              // left={<TextInput.Icon icon="lock" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
             <TextInput
               style={styles.input}
-              mode="outlined"
+              mode="flat"
               label="Confirm Password"
               value={confirmPassword}
+              textColor='#fff'
               onChangeText={setConfirmPassword}
               secureTextEntry
-              // left={<TextInput.Icon icon="lock-check" />}
-              theme={{ roundness: 12 }}
+              theme={{
+                roundness: 16,
+                colors: {
+                  primary: NETFLIX_RED,
+                  text: '#fff',
+                  placeholder: NETFLIX_GRAY,
+                  background: NETFLIX_CARD,
+                },
+              }}
+              underlineColor={NETFLIX_RED}
+              selectionColor={NETFLIX_RED}
             />
             <Button
               mode="contained"
               style={styles.registerButton}
-              contentStyle={{ paddingVertical: 10 }}
-              labelStyle={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}
+              contentStyle={{ paddingVertical: 12 }}
+              labelStyle={styles.registerButtonLabel}
               onPress={handleRegister}
               disabled={loading}
             >
-              {loading ? <ActivityIndicator color="#000" /> : 'Register'}
+              {loading ? <ActivityIndicator color="#fff" /> : 'Register'}
             </Button>
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account?</Text>
               <Button
                 mode="text"
                 labelStyle={styles.loginLink}
-                onPress={() => navigation.navigate('Login')}
+                onPress={() => navigation.navigate('OwnerLogin')}
               >
                 Login
               </Button>
@@ -149,14 +193,11 @@ const OwnerRegisterScreen = ({ navigation }: any) => {
           </Surface>
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -167,17 +208,23 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: 24,
-    padding: 28,
+    padding: 32,
     alignItems: 'center',
-    backgroundColor: '#fff',
-    elevation: 4,
+    backgroundColor: NETFLIX_CARD,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
   },
   logoContainer: {
     marginBottom: 18,
-    backgroundColor: '#fff',
+    backgroundColor: NETFLIX_CARD,
     borderRadius: 100,
     padding: 12,
-    elevation: 4,
+    elevation: 0,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -190,41 +237,50 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: '#fff',
     marginBottom: 4,
     textAlign: 'center',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 16,
-    color: '#ff914d',
+    color: NETFLIX_GRAY,
     marginBottom: 24,
     textAlign: 'center',
     fontWeight: '600',
   },
   input: {
     width: '100%',
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    marginBottom: 18,
+    backgroundColor: NETFLIX_CARD,
+    color: '#fff',
   },
   registerButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 32,
     marginTop: 8,
     marginBottom: 8,
-    backgroundColor: '#fff',
-    elevation: 2,
+    backgroundColor: NETFLIX_RED,
+    elevation: 0,
+    alignSelf: 'center',
+  },
+  registerButtonLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   loginContainer: {
     marginTop: 10,
     alignItems: 'center',
   },
   loginText: {
-    color: '#666',
+    color: NETFLIX_GRAY,
     fontSize: 15,
   },
   loginLink: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     fontSize: 16,
     marginTop: 2,

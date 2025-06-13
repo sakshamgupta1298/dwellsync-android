@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar, TouchableOpacity, Dimensions } from 'react-native';
 import { tenantService } from '../../services/api';
-import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const PaymentHistoryScreen = ({ navigation }: any) => {
   const [payments, setPayments] = useState<any[]>([]);
@@ -29,18 +35,18 @@ const PaymentHistoryScreen = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-        <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+      <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+        <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#ff3e55" />
+          <ActivityIndicator size="large" color={NETFLIX_RED} />
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
       <View style={{ padding: 20, paddingTop: 40, flex: 1 }}>
         {/* Back Button */}
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -55,38 +61,35 @@ const PaymentHistoryScreen = ({ navigation }: any) => {
               <Text style={styles.label}>Date: <Text style={styles.value}>{new Date(item.date).toLocaleString()}</Text></Text>
               <Text style={styles.label}>Amount: <Text style={styles.value}>₹{item.amount}</Text></Text>
               <Text style={styles.label}>Method: <Text style={styles.value}>{item.method}</Text></Text>
-              <Text style={styles.label}>Status: <Text style={[styles.value, { color: item.status === 'completed' ? '#2ecc40' : '#e67e22' }]}>{item.status}</Text></Text>
+              <Text style={styles.label}>Status: <Text style={[styles.value, { color: item.status === 'completed' ? '#2ecc40' : NETFLIX_RED }]}>{item.status}</Text></Text>
               <Text style={styles.label}>Reference: <Text style={styles.value}>{item.reference}</Text></Text>
             </Surface>
           )}
           ListEmptyComponent={<Text style={styles.empty}>No payment history found.</Text>}
         />
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 18,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 18,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    elevation: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    elevation: 0,
   },
   backButtonText: {
-    color: '#ff3e55',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: Math.max(18, width * 0.07),
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 18,
@@ -94,28 +97,33 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    elevation: 4,
-    shadowColor: '#ff3e55',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    backgroundColor: NETFLIX_CARD,
+    borderRadius: 24,
+    padding: width * 0.05,
+    marginBottom: width * 0.04,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   label: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     fontSize: 15,
   },
   value: {
-    color: '#333',
+    color: '#fff',
     fontWeight: 'normal',
     fontSize: 15,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { textAlign: 'center', color: '#fff', marginTop: 20, fontSize: 16 },
+  empty: { textAlign: 'center', color: NETFLIX_GRAY, marginTop: 20, fontSize: 16 },
 });
 
 export default PaymentHistoryScreen;

@@ -1,86 +1,87 @@
 import React from 'react';
-import { View, StyleSheet, Image, Dimensions } from 'react-native';
-import { Button, Text, useTheme, Surface } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
+import { View, StyleSheet, Image, Dimensions, StatusBar } from 'react-native';
+import { Button, Text, Surface } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
 const LandingScreen = ({ navigation }: any) => {
-  const theme = useTheme();
   return (
-    <LinearGradient
-      colors={["#ff914d", "#ff3e55"]}
-      style={styles.gradient}
-    >
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
       <Surface style={styles.container} elevation={0}>
-        {/* Logo/Icon */}
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/logo.png')} // Place a modern logo or icon in assets
+            source={require('../assets/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
         </View>
         <Text style={styles.title}>LiveInSync</Text>
-        <Text style={styles.tagline}>Smart. Simple. Seamless Rent Management.</Text>
+        <Text style={styles.tagline}>India's Smartest Rent App</Text>
         <Text style={styles.subtitle}>
-          Manage your rental journey with ease. For tenants & owners.
+        Unlock Effortless Living, Experience Smart Renting.
         </Text>
         <Button
           mode="contained"
           style={styles.startButton}
           contentStyle={{ paddingVertical: 10 }}
-          labelStyle={{ fontSize: 20, fontWeight: 'bold', letterSpacing: 1, color: '#000' }}
-          onPress={() => navigation.navigate('Login')}
+          labelStyle={{ fontSize: 20, fontWeight: 'bold', letterSpacing: 1, color: '#fff' }}
+          onPress={() => navigation.navigate('LoginSelection')}
         >
           Start
         </Button>
       </Surface>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
-    padding: 24,
+    padding: width * 0.06,
   },
   logoContainer: {
-    marginBottom: 24,
-    backgroundColor: '#fff',
+    marginBottom: 32,
+    backgroundColor: NETFLIX_CARD,
     borderRadius: 100,
-    padding: 18,
-    elevation: 6,
+    padding: 22,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
   },
   logo: {
-    width: width * 0.25,
-    height: width * 0.25,
+    width: width * 0.28,
+    height: width * 0.28,
   },
   title: {
-    fontSize: 38,
+    fontStyle: 'normal',
+    fontFamily: 'Roboto',
+    fontSize: Math.max(28, width * 0.09),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 10,
     letterSpacing: 2,
-    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowColor: 'rgba(0,0,0,0.18)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowRadius: 10,
   },
   tagline: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: '600',
-    marginBottom: 12,
+    fontStyle: 'normal',
+    fontFamily: 'Roboto',
+    fontSize: Math.max(16, width * 0.055),
+    color: NETFLIX_RED,
+    fontWeight: '700',
+    marginBottom: 14,
     textAlign: 'center',
     letterSpacing: 1,
     textShadowColor: 'rgba(0,0,0,0.10)',
@@ -88,17 +89,20 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 40,
+    fontStyle: 'italic',
+    fontFamily: 'Roboto',
+    fontSize: Math.max(12, width * 0.02),
+    color: NETFLIX_GRAY,
+    marginBottom: 44,
     textAlign: 'center',
-    opacity: 0.9,
+    opacity: 0.92,
   },
   startButton: {
-    width: 200,
-    borderRadius: 28,
-    elevation: 4,
-    backgroundColor: '#fff',
+    width: width * 0.6,
+    borderRadius: 32,
+    elevation: 6,
+    backgroundColor: NETFLIX_RED,
+    shadowColor: NETFLIX_RED,
   },
 });
 

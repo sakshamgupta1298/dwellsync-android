@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Alert, ScrollView, RefreshControl } from 'react-native';
 import { Text, TextInput, Button, Surface, Card } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { ownerService } from '../../services/api'; // Make sure this import exists
 import { useAuth } from '../../utils/AuthContext';
 
 const { width } = Dimensions.get('window');
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
 
 const OwnerOverviewSection = () => {
   const { signOut } = useAuth();
@@ -72,94 +76,150 @@ const OwnerOverviewSection = () => {
   };
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <View style={styles.headerRow}>
+        <Text style={styles.heading}>Overview</Text>
+        <Button mode="text" onPress={signOut} labelStyle={styles.logoutText}>
+          Logout
+        </Button>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Surface style={styles.container}>
-          <View style={styles.headerRow}>
-            <Text style={styles.heading}>Overview</Text>
-            <Button mode="text" onPress={signOut} labelStyle={styles.logoutText}>
-              Logout
-            </Button>
-          </View>
-          <Card style={styles.card}>
-            <Card.Title title="Set Electricity Rate" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/bolt.png')} style={styles.icon} />} />
-            <Card.Content>
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                label="Rate per Unit (₹)"
-                value={rate}
-                onChangeText={setRate}
-                keyboardType="numeric"
-                // left={<TextInput.Icon icon="flash" />}
-                theme={{ roundness: 12 }}
-              />
-              <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleUpdateRate}>
-                Update Rate
-              </Button>
-            </Card.Content>
-          </Card>
-          <Card style={styles.card}>
-            <Card.Title title="Register New Tenant" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/user-plus.png')} style={styles.icon} />} />
-            <Card.Content>
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                label="Tenant Name"
-                value={tenantName}
-                onChangeText={setTenantName}
-                // left={<TextInput.Icon icon="account" />}
-                theme={{ roundness: 12 }}
-              />
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                label="Monthly Rent (₹)"
-                value={monthlyRent}
-                onChangeText={setMonthlyRent}
-                keyboardType="numeric"
-                // left={<TextInput.Icon icon="currency-inr" />}
-                theme={{ roundness: 12 }}
-              />
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                label="Initial Electricity Meter Reading"
-                value={initialElectricity}
-                onChangeText={setInitialElectricity}
-                keyboardType="numeric"
-                theme={{ roundness: 12 }}
-              />
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                label="Initial Water Meter Reading"
-                value={initialWater}
-                onChangeText={setInitialWater}
-                keyboardType="numeric"
-                theme={{ roundness: 12 }}
-              />
-              <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleRegisterTenant}>
-                Register Tenant
-              </Button>
-            </Card.Content>
-          </Card>
-        </Surface>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <Surface style={styles.container}>
+            <Card style={styles.card}>
+              <Card.Title title="Register New Tenant" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/user-plus.png')} style={styles.icon} />} />
+              <Card.Content>
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
+                  label="Tenant Name"
+                  value={tenantName}
+                  textColor='#fff'
+                  onChangeText={setTenantName}
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
+                  label="Monthly Rent (₹)"
+                  value={monthlyRent}
+                  textColor='#fff'
+                  onChangeText={setMonthlyRent}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
+                  label="Initial Electricity Meter Reading"
+                  value={initialElectricity}
+                  textColor='#fff'
+                  onChangeText={setInitialElectricity}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
+                  label="Initial Water Meter Reading"
+                  value={initialWater}
+                  textColor='#fff'
+                  onChangeText={setInitialWater}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleRegisterTenant}>
+                  Register Tenant
+                </Button>
+              </Card.Content>
+            </Card>
+            <Card style={styles.card}>
+              <Card.Title title="Set Electricity Rate" titleStyle={styles.cardTitle} left={props => <Image source={require('../../assets/bolt.png')} style={styles.icon} />} />
+              <Card.Content>
+                <TextInput
+                  style={styles.input}
+                  mode="flat"
+                  label="Rate per Unit (₹)"
+                  value={rate}
+                  textColor='#fff'
+                  onChangeText={setRate}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleUpdateRate}>
+                  Update Rate
+                </Button>
+              </Card.Content>
+            </Card>
+          </Surface>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    padding: 16,
+    padding: width * 0.04,
     backgroundColor: 'transparent',
     justifyContent: 'center',
   },
@@ -167,52 +227,81 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: width * 0.04,
+    flexWrap: 'wrap',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   heading: {
-    fontSize: 24,
+    fontSize: Math.max(20, width * 0.07),
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
     letterSpacing: 1,
+    flexShrink: 1,
   },
   logoutText: {
-    color: '#fff',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: Math.max(14, width * 0.045),
+    paddingHorizontal: width * 0.03,
+    paddingVertical: width * 0.01,
+    backgroundColor: 'rgba(229,9,20,0.08)',
+    borderRadius: 18,
+    overflow: 'hidden',
+    textAlign: 'center',
   },
   card: {
     borderRadius: 20,
-    marginBottom: 24,
-    backgroundColor: '#fff',
-    elevation: 4,
-    paddingVertical: 8,
+    marginBottom: width * 0.02,
+    backgroundColor: NETFLIX_CARD,
+    elevation: 1,
+    paddingVertical: width * 0.004,
+    paddingHorizontal: width * 0.02,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: Math.max(14, width * 0.038),
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: '#fff',
     letterSpacing: 1,
   },
   icon: {
     width: 32,
     height: 32,
     marginRight: 8,
+    tintColor: NETFLIX_RED,
   },
   input: {
-    marginBottom: 14,
-    backgroundColor: '#fff',
+    marginBottom: width * 0.018,
+    backgroundColor: NETFLIX_CARD,
+    color: '#fff',
   },
   actionButton: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    elevation: 2,
-    marginTop: 8,
+    backgroundColor: NETFLIX_RED,
+    borderRadius: 32,
+    marginTop: 12,
+    marginBottom: 8,
+    elevation: 0,
+    width: '100%',
+    alignSelf: 'center',
+    paddingVertical: 10,
   },
   actionButtonLabel: {
-    color: '#ff3e55',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });
 

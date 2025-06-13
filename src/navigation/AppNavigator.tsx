@@ -24,6 +24,7 @@ import PaymentTrackingScreen from '../screens/owner/PaymentTrackingScreen';
 import { MaintenanceRequestsScreen } from '../screens/owner/MaintenanceRequestsScreen';
 
 import LandingScreen from '../screens/LandingScreen';
+import LoginSelectionScreen from '../screens/LoginSelectionScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,7 +42,13 @@ const AppNavigator = () => {
           // Auth Stack
           <>
             <Stack.Screen name="Landing" component={LandingScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="LoginSelection" component={LoginSelectionScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="OwnerLogin">
+              {props => <LoginScreen {...props} showRegister={true} />}
+            </Stack.Screen>
+            <Stack.Screen name="TenantLogin">
+              {props => <LoginScreen {...props} showRegister={false} />}
+            </Stack.Screen>
             <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
           </>

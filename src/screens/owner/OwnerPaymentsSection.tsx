@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
 import { ownerService } from '../../services/api';
-import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const OwnerPaymentsSection = () => {
   const [payments, setPayments] = useState<any[]>([]);
@@ -51,7 +57,7 @@ const OwnerPaymentsSection = () => {
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
       <Surface style={styles.container}>
       <Text style={styles.title}>Payments</Text>
       <FlatList
@@ -62,13 +68,13 @@ const OwnerPaymentsSection = () => {
             <Text style={styles.label}>Tenant: <Text style={styles.value}>{item.tenant_name || 'N/A'}</Text></Text>
             <Text style={styles.label}>Amount: <Text style={styles.value}>₹{item.amount || 'N/A'}</Text></Text>
             <Text style={styles.label}>Date: <Text style={styles.value}>{item.date ? new Date(item.date).toLocaleString() : 'N/A'}</Text></Text>
-            <Text style={styles.label}>Status: <Text style={styles.value}>{item.status || 'N/A'}</Text></Text>
+            <Text style={styles.label}>Status: <Text style={[styles.value, item.status === 'pending' ? styles.pending : styles.completed]}>{item.status || 'N/A'}</Text></Text>
             <Text style={styles.label}>Method: <Text style={styles.value}>{item.method || 'N/A'}</Text></Text>
             <Text style={styles.label}>Reference: <Text style={styles.value}>{item.reference || 'N/A'}</Text></Text>
             {item.status === 'pending' && (
               <View style={styles.actionRow}>
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#2ecc40' }]}
+                  style={[styles.actionButton, { backgroundColor: NETFLIX_RED }]}
                   onPress={() => handleAction(item.id, 'accept')}
                   disabled={actionLoading === item.id}
                 >
@@ -89,46 +95,57 @@ const OwnerPaymentsSection = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
       </Surface>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 24,
+    fontSize: Math.max(18, width * 0.07),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: width * 0.04,
     letterSpacing: 1,
   },
   paymentCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 4,
+    backgroundColor: NETFLIX_CARD,
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 18,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
   },
   label: {
-    color: '#ff3e55',
+    color: NETFLIX_GRAY,
     fontWeight: 'bold',
   },
   value: {
-    color: '#333',
+    color: '#fff',
     fontWeight: 'normal',
   },
+  pending: {
+    color: NETFLIX_RED,
+    fontWeight: 'bold',
+  },
+  completed: {
+    color: '#2ecc40',
+    fontWeight: 'bold',
+  },
   actionRow: { flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' },
-  actionButton: { flex: 1, padding: 10, borderRadius: 6, alignItems: 'center', marginHorizontal: 5 },
-  actionButtonText: { color: '#fff', fontWeight: 'bold' },
+  actionButton: { flex: 1, padding: 12, borderRadius: 32, alignItems: 'center', marginHorizontal: 5 },
+  actionButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16, textTransform: 'uppercase' },
   noPaymentsText: {
-    color: '#fff',
+    color: NETFLIX_GRAY,
     fontSize: 16,
     marginTop: 20,
     textAlign: 'center',
