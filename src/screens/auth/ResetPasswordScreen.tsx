@@ -9,7 +9,8 @@ import {
   Platform,
 } from 'react-native';
 import { Text, TextInput, Button, Surface } from 'react-native-paper';
-import { useRoute, useNavigation } from '@react-native-navigation/native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ownerService } from '../../services/api';
 
 const { width } = Dimensions.get('window');
@@ -19,12 +20,20 @@ const NETFLIX_CARD = '#232323';
 const NETFLIX_RED = '#E50914';
 const NETFLIX_GRAY = '#b3b3b3';
 
+type RootStackParamList = {
+  ResetPassword: { token: string };
+  OwnerLogin: undefined;
+};
+
+type ResetPasswordScreenRouteProp = RouteProp<RootStackParamList, 'ResetPassword'>;
+type ResetPasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 const ResetPasswordScreen = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const route = useRoute();
-  const navigation = useNavigation();
+  const route = useRoute<ResetPasswordScreenRouteProp>();
+  const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
   const token = route.params?.token;
 
   const handleResetPassword = async () => {
@@ -52,7 +61,7 @@ const ResetPasswordScreen = () => {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Login'),
+            onPress: () => navigation.navigate('OwnerLogin'),
           },
         ]
       );
@@ -134,7 +143,7 @@ const ResetPasswordScreen = () => {
               mode="text"
               style={styles.backButton}
               labelStyle={styles.backButtonLabel}
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => navigation.navigate('OwnerLogin')}
             >
               Back to Login
             </Button>
