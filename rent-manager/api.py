@@ -13,6 +13,7 @@ from flask_cors import CORS
 import random
 import string
 from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,16 @@ CORS(app)  # Enable CORS for API
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///rentmanager.db')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+# Email configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
+mail = Mail(app)
 stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 # Initialize extensions
@@ -877,19 +888,67 @@ def owner_forgot_password():
     email = data.get('email')
     if not email:
         return jsonify({'error': 'Email is required'}), 400
+    
     user = User.query.filter_by(email=email, is_owner=True).first()
     if not user:
         # For security, don't reveal if email exists
         return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
-    # Generate a token (for demo, just a random string)
-    token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-    # In production, save token and expiry to user, and send email
-    # user.reset_token = token
-    # user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
-    # db.session.commit()
-    # send_email(user.email, token)  # Implement this
-    print(f"Password reset token for {email}: {token}")  # For testing
-    return jsonify({'message': 'If the email exists, reset instructions have been sent.', 'token': token}), 200
+    
+    # Generate a secure token
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    token = serializer.dumps(email, salt='password-reset-salt')
+    
+    # Create reset link
+    reset_url = f"http://liveinsync.in/reset-password?token={token}"
+    
+    try:
+        # Send email
+        msg = Message(
+            'Password Reset Request',
+            recipients=[email]
+        )
+        msg.body = f'''To reset your password, visit the following link:
+{reset_url}
+
+If you did not make this request then simply ignore this email.
+'''
+        msg.html = f'''
+        <h2>Password Reset Request</h2>
+        <p>To reset your password, click the link below:</p>
+        <p><a href="{reset_url}">Reset Password</a></p>
+        <p>If you did not make this request then simply ignore this email.</p>
+        '''
+        mail.send(msg)
+        
+        return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
+
+# Add reset password endpoint
+@app.route('/api/owner/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+    
+    if not token or not new_password:
+        return jsonify({'error': 'Token and new password are required'}), 400
+    
+    try:
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  # Token expires in 1 hour
+    except:
+        return jsonify({'error': 'Invalid or expired token'}), 400
+    
+    user = User.query.filter_by(email=email, is_owner=True).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    user.set_password(new_password)
+    db.session.commit()
+    
+    return jsonify({'message': 'Password has been reset successfully'}), 200
 
 if __name__ == '__main__':
     with app.app_context():
