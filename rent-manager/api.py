@@ -14,11 +14,6 @@ import random
 import string
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -28,27 +23,14 @@ CORS(app)  # Enable CORS for API
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///rentmanager.db')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['DEBUG'] = True  # Enable debug mode
 
 # Email configuration
-app.config['MAIL_SERVER'] = 'smtpout.secureserver.net'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_MAX_EMAILS'] = 5
-app.config['MAIL_ASCII_ATTACHMENTS'] = False
-app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True
-app.config['MAIL_TIMEOUT'] = 10  # 10 seconds timeout
-
-# Log email configuration (without password)
-logger.debug(f"Mail Server: {app.config['MAIL_SERVER']}")
-logger.debug(f"Mail Port: {app.config['MAIL_PORT']}")
-logger.debug(f"Mail Username: {app.config['MAIL_USERNAME']}")
-logger.debug(f"Mail Default Sender: {app.config['MAIL_DEFAULT_SENDER']}")
 
 mail = Mail(app)
 stripe.api_key = os.getenv('STRIPE_API_KEY')
@@ -902,90 +884,46 @@ def approve_maintenance_request(current_user, request_id):
 
 @app.route('/api/owner/forgot-password', methods=['POST'])
 def owner_forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    
+    user = User.query.filter_by(email=email, is_owner=True).first()
+    if not user:
+        # For security, don't reveal if email exists
+        return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
+    
+    # Generate a secure token
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    token = serializer.dumps(email, salt='password-reset-salt')
+    
+    # Create reset link
+    reset_url = f"http://liveinsync.in/reset-password?token={token}"
+    
     try:
-        logger.debug("Received forgot password request")
-        data = request.get_json()
-        logger.debug(f"Request data: {data}")
-        
-        if not data:
-            logger.error("No data provided in request")
-            return jsonify({'error': 'No data provided'}), 400
-            
-        email = data.get('email')
-        if not email:
-            logger.error("No email provided in request")
-            return jsonify({'error': 'Email is required'}), 400
-        
-        logger.debug(f"Looking for user with email: {email}")
-        user = User.query.filter_by(email=email, is_owner=True).first()
-        if not user:
-            logger.debug(f"No user found with email: {email}")
-            return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
-        
-        logger.debug(f"Found user: {user.id}")
-        
-        # Generate a secure token
-        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-        token = serializer.dumps(email, salt='password-reset-salt')
-        logger.debug(f"Generated token: {token}")
-        
-        # Create reset link
-        reset_url = f"http://liveinsync.in/reset-password?token={token}"
-        logger.debug(f"Reset URL: {reset_url}")
-        
-        try:
-            # Send email
-            msg = Message(
-                'Password Reset Request',
-                recipients=[email]
-            )
-            msg.body = f'''To reset your password, visit the following link:
+        # Send email
+        msg = Message(
+            'Password Reset Request',
+            recipients=[email]
+        )
+        msg.body = f'''To reset your password, visit the following link:
 {reset_url}
 
 If you did not make this request then simply ignore this email.
 '''
-            msg.html = f'''
-            <h2>Password Reset Request</h2>
-            <p>To reset your password, click the link below:</p>
-            <p><a href="{reset_url}">Reset Password</a></p>
-            <p>If you did not make this request then simply ignore this email.</p>
-            '''
-            logger.debug("Attempting to send email")
-            
-            # Add error handling for SMTP connection
-            try:
-                mail.send(msg)
-                logger.debug("Email sent successfully")
-                return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
-            except Exception as smtp_error:
-                logger.error(f"SMTP Error: {str(smtp_error)}")
-                # For development/testing, return the token
-                if app.debug:
-                    logger.debug("Debug mode: Returning token and URL due to SMTP error")
-                    return jsonify({
-                        'message': 'Password reset instructions have been sent to your email.',
-                        'debug_token': token,
-                        'debug_url': reset_url,
-                        'debug_error': str(smtp_error)
-                    }), 200
-                return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
-                
-        except Exception as e:
-            logger.error(f"Error sending email: {str(e)}")
-            # For development/testing, return the token
-            if app.debug:
-                logger.debug("Debug mode: Returning token and URL")
-                return jsonify({
-                    'message': 'Password reset instructions have been sent to your email.',
-                    'debug_token': token,
-                    'debug_url': reset_url,
-                    'debug_error': str(e)
-                }), 200
-            return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
-            
+        msg.html = f'''
+        <h2>Password Reset Request</h2>
+        <p>To reset your password, click the link below:</p>
+        <p><a href="{reset_url}">Reset Password</a></p>
+        <p>If you did not make this request then simply ignore this email.</p>
+        '''
+        mail.send(msg)
+        
+        return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
     except Exception as e:
-        logger.error(f"Unexpected error in forgot-password endpoint: {str(e)}")
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        print(f"Error sending email: {str(e)}")
+        return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
 
 # Add reset password endpoint
 @app.route('/api/owner/reset-password', methods=['POST'])
@@ -1015,4 +953,4 @@ def reset_password():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000) 
