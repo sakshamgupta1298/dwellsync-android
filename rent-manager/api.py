@@ -37,6 +37,11 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_MAX_EMAILS'] = 5
+app.config['MAIL_ASCII_ATTACHMENTS'] = False
+app.config['MAIL_SUPPRESS_SEND'] = False
+app.config['MAIL_DEBUG'] = True
+app.config['MAIL_TIMEOUT'] = 10  # 10 seconds timeout
 
 # Log email configuration (without password)
 logger.debug(f"Mail Server: {app.config['MAIL_SERVER']}")
@@ -945,10 +950,25 @@ If you did not make this request then simply ignore this email.
             <p>If you did not make this request then simply ignore this email.</p>
             '''
             logger.debug("Attempting to send email")
-            mail.send(msg)
-            logger.debug("Email sent successfully")
             
-            return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
+            # Add error handling for SMTP connection
+            try:
+                mail.send(msg)
+                logger.debug("Email sent successfully")
+                return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
+            except Exception as smtp_error:
+                logger.error(f"SMTP Error: {str(smtp_error)}")
+                # For development/testing, return the token
+                if app.debug:
+                    logger.debug("Debug mode: Returning token and URL due to SMTP error")
+                    return jsonify({
+                        'message': 'Password reset instructions have been sent to your email.',
+                        'debug_token': token,
+                        'debug_url': reset_url,
+                        'debug_error': str(smtp_error)
+                    }), 200
+                return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
+                
         except Exception as e:
             logger.error(f"Error sending email: {str(e)}")
             # For development/testing, return the token
@@ -957,7 +977,8 @@ If you did not make this request then simply ignore this email.
                 return jsonify({
                     'message': 'Password reset instructions have been sent to your email.',
                     'debug_token': token,
-                    'debug_url': reset_url
+                    'debug_url': reset_url,
+                    'debug_error': str(e)
                 }), 200
             return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
             
