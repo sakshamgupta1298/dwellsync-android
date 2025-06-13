@@ -884,46 +884,61 @@ def approve_maintenance_request(current_user, request_id):
 
 @app.route('/api/owner/forgot-password', methods=['POST'])
 def owner_forgot_password():
-    data = request.get_json()
-    email = data.get('email')
-    if not email:
-        return jsonify({'error': 'Email is required'}), 400
-    
-    user = User.query.filter_by(email=email, is_owner=True).first()
-    if not user:
-        # For security, don't reveal if email exists
-        return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
-    
-    # Generate a secure token
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    token = serializer.dumps(email, salt='password-reset-salt')
-    
-    # Create reset link
-    reset_url = f"http://liveinsync.in/reset-password?token={token}"
-    
     try:
-        # Send email
-        msg = Message(
-            'Password Reset Request',
-            recipients=[email]
-        )
-        msg.body = f'''To reset your password, visit the following link:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        email = data.get('email')
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        user = User.query.filter_by(email=email, is_owner=True).first()
+        if not user:
+            # For security, don't reveal if email exists
+            return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
+        
+        # Generate a secure token
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        token = serializer.dumps(email, salt='password-reset-salt')
+        
+        # Create reset link
+        reset_url = f"http://liveinsync.in/reset-password?token={token}"
+        
+        try:
+            # Send email
+            msg = Message(
+                'Password Reset Request',
+                recipients=[email]
+            )
+            msg.body = f'''To reset your password, visit the following link:
 {reset_url}
 
 If you did not make this request then simply ignore this email.
 '''
-        msg.html = f'''
-        <h2>Password Reset Request</h2>
-        <p>To reset your password, click the link below:</p>
-        <p><a href="{reset_url}">Reset Password</a></p>
-        <p>If you did not make this request then simply ignore this email.</p>
-        '''
-        mail.send(msg)
-        
-        return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
+            msg.html = f'''
+            <h2>Password Reset Request</h2>
+            <p>To reset your password, click the link below:</p>
+            <p><a href="{reset_url}">Reset Password</a></p>
+            <p>If you did not make this request then simply ignore this email.</p>
+            '''
+            mail.send(msg)
+            
+            return jsonify({'message': 'Password reset instructions have been sent to your email.'}), 200
+        except Exception as e:
+            print(f"Error sending email: {str(e)}")
+            # For development/testing, return the token
+            if app.debug:
+                return jsonify({
+                    'message': 'Password reset instructions have been sent to your email.',
+                    'debug_token': token,
+                    'debug_url': reset_url
+                }), 200
+            return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
+            
     except Exception as e:
-        print(f"Error sending email: {str(e)}")
-        return jsonify({'error': 'Failed to send reset email. Please try again.'}), 500
+        print(f"Error in forgot-password endpoint: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
 
 # Add reset password endpoint
 @app.route('/api/owner/reset-password', methods=['POST'])
