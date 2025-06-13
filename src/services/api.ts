@@ -236,6 +236,14 @@ export const ownerService = {
       throw error;
     }
   },
+  resetPassword: async (token: string, newPassword: string) => {
+    try {
+      const response = await api.post('/owner/reset-password', { token, new_password: newPassword });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default api; 
