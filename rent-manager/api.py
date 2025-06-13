@@ -12,6 +12,7 @@ from functools import wraps
 from flask_cors import CORS
 import random
 import string
+from itsdangerous import URLSafeTimedSerializer
 
 # Load environment variables
 load_dotenv()
@@ -869,6 +870,26 @@ def approve_maintenance_request(current_user, request_id):
     req.status = 'closed'
     db.session.commit()
     return jsonify({'message': 'Maintenance completion approved', 'status': req.status}), 200
+
+@app.route('/api/owner/forgot-password', methods=['POST'])
+def owner_forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    user = User.query.filter_by(email=email, is_owner=True).first()
+    if not user:
+        # For security, don't reveal if email exists
+        return jsonify({'message': 'If the email exists, reset instructions have been sent.'}), 200
+    # Generate a token (for demo, just a random string)
+    token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+    # In production, save token and expiry to user, and send email
+    # user.reset_token = token
+    # user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+    # db.session.commit()
+    # send_email(user.email, token)  # Implement this
+    print(f"Password reset token for {email}: {token}")  # For testing
+    return jsonify({'message': 'If the email exists, reset instructions have been sent.', 'token': token}), 200
 
 if __name__ == '__main__':
     with app.app_context():

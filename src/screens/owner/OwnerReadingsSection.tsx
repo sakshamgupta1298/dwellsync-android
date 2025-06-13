@@ -1,15 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, TouchableOpacity, Linking, Dimensions, RefreshControl } from 'react-native';
 import { ownerService } from '../../services/api';
-import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
 import config from '../../config';
 
 const BACKEND_URL = config.apiUrl.replace('/api', ''); // This will use the correct URL based on environment
 
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
+
 const OwnerReadingsSection = () => {
   const [readings, setReadings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    ownerService.getMeterReadings()
+      .then(setReadings)
+      .catch(e => Alert.alert('Error', e.response?.data?.error || 'Failed to load readings'))
+      .finally(() => setRefreshing(false));
+  };
 
   useEffect(() => {
     ownerService.getMeterReadings()
@@ -37,9 +52,9 @@ const OwnerReadingsSection = () => {
 
     return (
       <View style={styles.readingCard} key={item.id}>
-        <Text style={styles.readingText}>Tenant: {item.tenant_name}</Text>
-        <Text style={styles.readingText}>Value: {item.reading_value}</Text>
-        <Text style={styles.readingText}>Date: {new Date(item.reading_date).toLocaleString()}</Text>
+        <Text style={styles.readingText}>Tenant: <Text style={styles.readingHighlight}>{item.tenant_name}</Text></Text>
+        <Text style={styles.readingText}>Value: <Text style={styles.readingHighlight}>{item.reading_value}</Text></Text>
+        <Text style={styles.readingText}>Date: <Text style={styles.readingHighlight}>{new Date(item.reading_date).toLocaleString()}</Text></Text>
         {imageUrl ? (
           <TouchableOpacity onPress={() => {
             Linking.openURL(imageUrl).catch(err => {
@@ -50,16 +65,20 @@ const OwnerReadingsSection = () => {
             <Text style={styles.link}>View Photo</Text>
           </TouchableOpacity>
         ) : (
-          <Text style={[styles.readingText, { color: '#888' }]}>No photo</Text>
+          <Text style={[styles.readingText, { color: NETFLIX_GRAY }]}>No photo</Text>
         )}
       </View>
     );
   };
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
       <Surface style={styles.container}>
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <Text style={styles.title}>Electricity Meter Readings</Text>
           {electricityReadings.length === 0 ? (
             <Text style={styles.noReadingsText}>No electricity readings found.</Text>
@@ -75,45 +94,55 @@ const OwnerReadingsSection = () => {
           )}
         </ScrollView>
       </Surface>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    padding: 16,
+    padding: width * 0.04,
     backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 24,
+    fontSize: Math.max(14, width * 0.045),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: width * 0.04,
     letterSpacing: 1,
   },
   readingCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 4,
+    backgroundColor: NETFLIX_CARD,
+    padding: width * 0.025,
+    borderRadius: 24,
+    marginBottom: width * 0.02,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 470,
+    alignSelf: 'center',
   },
   readingText: {
-    color: '#222',
+    color: '#fff',
     marginBottom: 4,
-    fontSize: 15,
+    fontSize: 16,
+  },
+  readingHighlight: {
+    color: NETFLIX_RED,
+    fontWeight: 'bold',
   },
   link: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     marginTop: 8,
   },
   noReadingsText: {
-    color: '#fff',
+    color: NETFLIX_GRAY,
     fontSize: 16,
     marginBottom: 16,
   },

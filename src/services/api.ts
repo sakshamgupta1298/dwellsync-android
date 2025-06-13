@@ -228,6 +228,14 @@ export const ownerService = {
       throw error;
     }
   },
+  forgotPassword: async (email: string) => {
+    try {
+      const response = await api.post('/owner/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default api; 

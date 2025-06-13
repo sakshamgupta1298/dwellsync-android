@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, Dimensions } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import GradientBackground from '../GradientBackground';
 
 // Fallback OwnerOverviewSection if not yet implemented
 import OwnerOverviewSection from './OwnerOverviewSection';
@@ -32,22 +33,24 @@ const OwnerDashboardScreen = () => {
   });
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      initialLayout={initialLayout}
-      renderTabBar={props => (
-        <TabBar
-          {...props}
-          indicatorStyle={{ backgroundColor: '#ff3e55' }}
-          style={{ backgroundColor: '#fff' }}
-          activeColor="#ff3e55"
-          inactiveColor="#000"
-          scrollEnabled={true}
-        />
-      )}
-    />
+    <GradientBackground>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={initialLayout}
+        renderTabBar={props => (
+          <TabBar
+            {...props}
+            indicatorStyle={{ backgroundColor: '#ff3e55' }}
+            style={{ backgroundColor: '#fff' }}
+            activeColor="#ff3e55"
+            inactiveColor="#000"
+            scrollEnabled={true}
+          />
+        )}
+      />
+    </GradientBackground>
   );
 };
 

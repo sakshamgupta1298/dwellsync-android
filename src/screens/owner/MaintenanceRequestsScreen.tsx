@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaintenanceRequest, MaintenanceStatus } from '../../types/maintenance';
@@ -17,7 +18,13 @@ import { maintenanceService } from '../../services/maintenanceService';
 import { socketService } from '../../services/socket';
 import { showMessage } from 'react-native-flash-message';
 import { Card, Title, Paragraph, Button, Chip, Portal, Modal, TextInput, Surface } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 export const MaintenanceRequestsScreen = () => {
   const navigation = useNavigation();
@@ -157,27 +164,22 @@ export const MaintenanceRequestsScreen = () => {
   const renderRequest = ({ item }: { item: MaintenanceRequest }) => (
     <Surface style={styles.card}>
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.tenant}>Tenant: {item.tenantName || 'Unknown'}</Text>
+      <Text style={styles.tenant}>Tenant: <Text style={styles.tenantHighlight}>{item.tenantName || 'Unknown'}</Text></Text>
       <Text style={styles.description}>{item.description}</Text>
-      <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
-        Status: {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-      </Text>
+      <Text style={[styles.status, { color: getStatusColor(item.status) }]}>Status: {item.status.charAt(0).toUpperCase() + item.status.slice(1)}</Text>
       <Text style={styles.date}>Requested on: {formatDate(item.createdAt)}</Text>
-      
       {item.status === 'completed' && item.isApprovedByTenant && (
         <Text style={styles.approved}>Approved by tenant</Text>
       )}
-      
       {item.status !== 'closed' && (
         <View style={styles.buttonContainer}>
           {item.status === 'pending' && (
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: '#3498db' }]}
+              style={[styles.button, { backgroundColor: NETFLIX_RED }]}
               onPress={() => handleStatusUpdate(item.id, 'in_progress')}>
               <Text style={styles.buttonText}>Start Work</Text>
             </TouchableOpacity>
           )}
-          
           {item.status === 'in_progress' && (
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#2ecc71' }]}
@@ -185,7 +187,6 @@ export const MaintenanceRequestsScreen = () => {
               <Text style={styles.buttonText}>Mark as Completed</Text>
             </TouchableOpacity>
           )}
-          
           {item.status === 'completed' && item.isApprovedByTenant && (
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#95a5a6' }]}
@@ -205,18 +206,18 @@ export const MaintenanceRequestsScreen = () => {
 
   if (loading) {
     return (
-      <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-        <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+      <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+        <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
       <View style={styles.container}>
         <Text style={styles.header}>Maintenance Requests</Text>
         <FlatList
@@ -224,82 +225,91 @@ export const MaintenanceRequestsScreen = () => {
           renderItem={renderRequest}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={<Text style={styles.empty}>No maintenance requests found.</Text>}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={fetchRequests} />
+          }
         />
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    padding: 16,
+    padding: width * 0.05,
   },
   header: {
-    fontSize: 24,
+    fontSize: Math.max(18, width * 0.07),
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: width * 0.04,
     color: '#fff',
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 22,
-    elevation: 5,
-    shadowColor: '#ff3e55',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    backgroundColor: NETFLIX_CARD,
+    borderRadius: 24,
+    marginBottom: width * 0.045,
+    padding: width * 0.05,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#ff3e55',
-    marginBottom: 8,
+    color: '#fff',
+    marginBottom: 6,
   },
   tenant: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+    color: NETFLIX_GRAY,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  tenantHighlight: {
+    color: NETFLIX_RED,
+    fontWeight: 'bold',
   },
   description: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 8,
-  },
-  status: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 4,
   },
+  status: {
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
   date: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 8,
+    color: NETFLIX_GRAY,
+    marginBottom: 2,
   },
   approved: {
-    fontSize: 14,
     color: '#2ecc71',
-    marginBottom: 8,
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: 10,
+    justifyContent: 'space-between',
   },
   button: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginLeft: 8,
+    flex: 1,
+    padding: 12,
+    borderRadius: 32,
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
+    textTransform: 'uppercase',
   },
   loadingContainer: {
     flex: 1,
@@ -313,6 +323,6 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 40,
     textAlign: 'center',
-    color: '#fff',
+    color: NETFLIX_GRAY,
   },
 }); 

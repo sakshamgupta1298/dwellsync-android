@@ -10,13 +10,20 @@ import {
   Platform,
   ActionSheetIOS,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useAuth } from '../../utils/AuthContext';
 import { tenantService } from '../../services/api';
-import LinearGradient from 'react-native-linear-gradient';
 import { Surface } from 'react-native-paper';
 import { maintenanceService } from '../../services/maintenanceService';
 import { MaintenanceRequest } from '../../types/maintenance';
+
+const NETFLIX_BG = '#141414';
+const NETFLIX_CARD = '#232323';
+const NETFLIX_RED = '#E50914';
+const NETFLIX_GRAY = '#b3b3b3';
+
+const { width } = Dimensions.get('window');
 
 const DashboardScreen = ({ navigation }: any) => {
   // Hide the navigation header
@@ -100,31 +107,30 @@ const DashboardScreen = ({ navigation }: any) => {
 
   if (loading) {
     return (
-      <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-        <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
+      <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+        <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
         <View style={styles.loadingContainer}>
           <Text style={{ color: '#fff', fontSize: 18 }}>Loading...</Text>
+        </View>
       </View>
-      </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={["#ff914d", "#ff3e55"]} style={styles.gradient}>
-      <StatusBar barStyle="light-content" backgroundColor="#ff3e55" />
-    <ScrollView
+    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={NETFLIX_BG} />
+      <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 20, paddingTop: 40 }}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }>
+        contentContainerStyle={{ padding: width * 0.05, paddingTop: width * 0.1 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <View style={styles.headerRow}>
           <Text style={styles.welcomeText}>Hi, {user?.name}</Text>
-        <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
+          <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
         {/* Billing Card */}
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Current Billing</Text>
@@ -133,7 +139,6 @@ const DashboardScreen = ({ navigation }: any) => {
           <View style={styles.billingRow}><Text style={styles.billingLabel}>Water</Text><Text style={styles.billingValue}>₹{dashboardData?.billing?.water}</Text></View>
           <View style={[styles.billingRow, styles.totalRow]}><Text style={styles.totalLabel}>Total Due</Text><Text style={styles.totalValue}>₹{dashboardData?.billing?.total}</Text></View>
         </Surface>
-
         {/* Meter Readings Card */}
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Meter Readings</Text>
@@ -145,13 +150,12 @@ const DashboardScreen = ({ navigation }: any) => {
             <Text style={styles.secondaryButtonText}>Submit New Reading</Text>
           </TouchableOpacity>
         </Surface>
-
         {/* Payment Status Card */}
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Payment Status</Text>
           {dashboardData?.payment_status ? (
             <>
-              <Text style={styles.paymentStatus}>Status: <Text style={{ color: dashboardData.payment_status.status === 'completed' ? '#2ecc40' : '#e67e22', fontWeight: 'bold' }}>{dashboardData.payment_status.status}</Text></Text>
+              <Text style={styles.paymentStatus}>Status: <Text style={{ color: dashboardData.payment_status.status === 'completed' ? '#2ecc40' : NETFLIX_RED, fontWeight: 'bold' }}>{dashboardData.payment_status.status}</Text></Text>
               <Text style={styles.paymentAmount}>Amount: ₹{dashboardData.payment_status.amount}</Text>
               <Text style={styles.paymentDate}>Date: {new Date(dashboardData.payment_status.date).toLocaleDateString()}</Text>
             </>
@@ -165,7 +169,6 @@ const DashboardScreen = ({ navigation }: any) => {
             <Text style={styles.primaryButtonText}>Make Payment</Text>
           </TouchableOpacity>
         </Surface>
-
         {/* Maintenance Request Card */}
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Maintenance</Text>
@@ -178,7 +181,6 @@ const DashboardScreen = ({ navigation }: any) => {
             <Text style={styles.secondaryButtonText}>Submit Maintenance Request</Text>
           </TouchableOpacity>
         </Surface>
-
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Your Maintenance Requests</Text>
           <TouchableOpacity
@@ -188,21 +190,17 @@ const DashboardScreen = ({ navigation }: any) => {
             <Text style={styles.secondaryButtonText}>View Maintenance Requests</Text>
           </TouchableOpacity>
         </Surface>
-
         <TouchableOpacity
           style={styles.historyButton}
           onPress={() => navigation.navigate('PaymentHistory')}>
           <Text style={styles.historyButtonText}>View Payment History</Text>
         </TouchableOpacity>
-    </ScrollView>
-    </LinearGradient>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   welcomeText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     letterSpacing: 1,
@@ -224,25 +222,30 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   logoutText: {
-    color: '#fff',
+    color: NETFLIX_RED,
     fontSize: 16,
     fontWeight: 'bold',
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 22,
-    elevation: 5,
-    shadowColor: '#ff3e55',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    backgroundColor: NETFLIX_CARD,
+    borderRadius: 24,
+    padding: width * 0.05,
+    marginBottom: width * 0.06,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#222',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   cardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: '#fff',
     marginBottom: 14,
     letterSpacing: 1,
   },
@@ -253,29 +256,29 @@ const styles = StyleSheet.create({
   },
   billingLabel: {
     fontSize: 16,
-    color: '#888',
+    color: NETFLIX_GRAY,
     fontWeight: '500',
   },
   billingValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   totalRow: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#ffe0d2',
+    borderTopColor: '#232323',
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: NETFLIX_RED,
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3e55',
+    color: NETFLIX_RED,
   },
   meterRow: {
     flexDirection: 'row',
@@ -284,85 +287,89 @@ const styles = StyleSheet.create({
   },
   meterLabel: {
     fontSize: 16,
-    color: '#888',
+    color: NETFLIX_GRAY,
     fontWeight: '500',
   },
   meterValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   secondaryButton: {
-    backgroundColor: '#fff',
-    borderColor: '#ff3e55',
+    backgroundColor: 'transparent',
+    borderColor: NETFLIX_RED,
     borderWidth: 2,
-    borderRadius: 24,
+    borderRadius: 32,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 16,
   },
   secondaryButtonText: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontWeight: 'bold',
     fontSize: 16,
   },
   primaryButton: {
-    backgroundColor: '#ff3e55',
-    borderRadius: 24,
+    backgroundColor: NETFLIX_RED,
+    borderRadius: 32,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 18,
     marginBottom: 2,
-    elevation: 2,
+    elevation: 0,
+    width: '100%',
+    alignSelf: 'center',
   },
   primaryButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 17,
     letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   paymentStatus: {
     fontSize: 16,
     marginBottom: 5,
-    color: '#333',
+    color: '#fff',
   },
   paymentAmount: {
     fontSize: 16,
     marginBottom: 5,
-    color: '#333',
+    color: '#fff',
   },
   paymentDate: {
     fontSize: 16,
     marginBottom: 15,
-    color: '#888',
+    color: NETFLIX_GRAY,
   },
   noPayment: {
     fontSize: 16,
-    color: '#888',
+    color: NETFLIX_GRAY,
     marginBottom: 15,
   },
   historyButton: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     padding: 15,
-    borderRadius: 24,
+    borderRadius: 32,
     alignItems: 'center',
     marginTop: 10,
-    elevation: 2,
+    borderWidth: 2,
+    borderColor: NETFLIX_RED,
   },
   historyButtonText: {
-    color: '#ff3e55',
+    color: NETFLIX_RED,
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
   },
   maintenanceText: {
     fontSize: 14,
-    color: '#666',
+    color: NETFLIX_GRAY,
     marginBottom: 16,
     lineHeight: 20,
   },
   maintenanceHistoryCard: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: NETFLIX_CARD,
     borderRadius: 8,
     padding: 10,
     marginTop: 8,
@@ -370,6 +377,7 @@ const styles = StyleSheet.create({
   maintenanceHistoryTitle: {
     fontWeight: 'bold',
     fontSize: 15,
+    color: '#fff',
   },
 });
 
