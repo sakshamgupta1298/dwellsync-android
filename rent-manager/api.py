@@ -1,6 +1,3 @@
-from gevent import monkey
-monkey.patch_all()
-
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
@@ -15,20 +12,12 @@ from functools import wraps
 from flask_cors import CORS
 import random
 import string
-from flask_socketio import SocketIO, emit, disconnect
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
+CORS(app)  # Enable CORS for API
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///rentmanager.db')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -39,191 +28,8 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Initialize SocketIO with proper configuration
-socketio = SocketIO(
-    app,
-    cors_allowed_origins="*",
-    async_mode='gevent',
-    logger=True,
-    engineio_logger=True,
-    message_queue=None
-)
-
-# Initialize scheduler
-scheduler = BackgroundScheduler()
-scheduler.start()
-
-# Store connected users with additional metadata
-connected_users = {}
-
-def check_payment_due_dates():
-    """Check for upcoming and overdue payments and send notifications"""
-    with app.app_context():
-        # Get all tenants
-        tenants = User.query.filter_by(is_owner=False).all()
-        today = datetime.now().date()
-        
-        for tenant in tenants:
-            # Get the latest payment for this tenant
-            latest_payment = Payment.query.filter_by(
-                user_id=tenant.id,
-                status='completed'
-            ).order_by(Payment.payment_date.desc()).first()
-            
-            # Calculate next payment due date
-            if latest_payment:
-                next_due_date = latest_payment.payment_date + timedelta(days=30)
-            else:
-                # If no previous payment, use tenant creation date
-                next_due_date = tenant.created_at + timedelta(days=30)
-            
-            # Calculate days until due
-            days_until_due = (next_due_date.date() - today).days
-            
-            # Send notifications based on due date
-            if days_until_due == 7:  # 7 days before due date
-                if tenant.id in connected_users:
-                    notification_message = f"Payment of ₹{tenant.rent_amount:.2f} is due in 7 days"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_reminder'
-                    }, room=connected_users[tenant.id])
-                
-                # Also notify owner
-                owner = User.query.get(tenant.owner_id)
-                if owner and owner.id in connected_users:
-                    notification_message = f"Payment reminder: {tenant.name}'s payment of ₹{tenant.rent_amount:.2f} is due in 7 days"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_reminder'
-                    }, room=connected_users[owner.id])
-            
-            elif days_until_due == 0:  # Due today
-                if tenant.id in connected_users:
-                    notification_message = f"Payment of ₹{tenant.rent_amount:.2f} is due today"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_due'
-                    }, room=connected_users[tenant.id])
-                
-                # Also notify owner
-                owner = User.query.get(tenant.owner_id)
-                if owner and owner.id in connected_users:
-                    notification_message = f"Payment due today: {tenant.name}'s payment of ₹{tenant.rent_amount:.2f}"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_due'
-                    }, room=connected_users[owner.id])
-            
-            elif days_until_due < 0:  # Overdue
-                if tenant.id in connected_users:
-                    notification_message = f"Payment of ₹{tenant.rent_amount:.2f} is overdue by {abs(days_until_due)} days"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_overdue'
-                    }, room=connected_users[tenant.id])
-                
-                # Also notify owner
-                owner = User.query.get(tenant.owner_id)
-                if owner and owner.id in connected_users:
-                    notification_message = f"Payment overdue: {tenant.name}'s payment of ₹{tenant.rent_amount:.2f} is overdue by {abs(days_until_due)} days"
-                    socketio.emit('notification', {
-                        'message': notification_message,
-                        'timestamp': datetime.utcnow().isoformat(),
-                        'type': 'payment_overdue'
-                    }, room=connected_users[owner.id])
-
-# Schedule the payment due date check to run daily at 9 AM
-scheduler.add_job(
-    func=check_payment_due_dates,
-    trigger=CronTrigger(hour=9, minute=0),
-    id='payment_due_date_check',
-    name='Check payment due dates and send notifications',
-    replace_existing=True
-)
-
-@socketio.on('connect')
-def handle_connect():
-    """Handle client connection with logging"""
-    logger.info(f'Client connected: {request.sid}')
-    return {'status': 'connected'}
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    """Handle client disconnection with cleanup"""
-    logger.info(f'Client disconnected: {request.sid}')
-    # Remove user from connected_users if they were authenticated
-    for user_id, sid in list(connected_users.items()):
-        if sid == request.sid:
-            del connected_users[user_id]
-            logger.info(f'User {user_id} removed from connected users')
-            break
-
-@socketio.on('authenticate')
-def handle_authenticate(data):
-    """Handle client authentication with proper error handling"""
-    try:
-        token = data.get('token')
-        if not token:
-            logger.warning('Authentication attempt without token')
-            return {'error': 'No token provided'}
-
-        # Decode and verify token
-        decoded = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = decoded['user_id']
-        
-        # Store the socket ID for this user
-        connected_users[user_id] = request.sid
-        logger.info(f'User {user_id} authenticated with socket ID {request.sid}')
-        
-        # Send confirmation to client
-        emit('authentication_status', {
-            'status': 'authenticated',
-            'user_id': user_id
-        })
-        
-        return {'status': 'authenticated'}
-    except jwt.ExpiredSignatureError:
-        logger.warning('Authentication attempt with expired token')
-        return {'error': 'Token expired'}
-    except jwt.InvalidTokenError:
-        logger.warning('Authentication attempt with invalid token')
-        return {'error': 'Invalid token'}
-    except Exception as e:
-        logger.error(f'Authentication error: {str(e)}')
-        return {'error': 'Authentication failed'}
-
-@socketio.on_error()
-def error_handler(e):
-    """Handle WebSocket errors"""
-    logger.error(f'WebSocket error: {str(e)}')
-    return {'error': 'Internal server error'}
-
-@socketio.on_error_default
-def default_error_handler(e):
-    """Handle default WebSocket errors"""
-    logger.error(f'Default WebSocket error: {str(e)}')
-    return {'error': 'Internal server error'}
-
-def send_notification_to_owner(owner_id, message, notification_type='info'):
-    """Send a notification to a specific owner with error handling"""
-    try:
-        if owner_id in connected_users:
-            socketio.emit('notification', {
-                'message': message,
-                'timestamp': datetime.utcnow().isoformat(),
-                'type': notification_type
-            }, room=connected_users[owner_id])
-            logger.info(f'Notification sent to owner {owner_id}: {message}')
-        else:
-            logger.warning(f'Owner {owner_id} not connected. Notification not sent: {message}')
-    except Exception as e:
-        logger.error(f'Error sending notification to owner {owner_id}: {str(e)}')
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Token verification decorator
 def token_required(f):
@@ -729,11 +535,6 @@ def create_payment(current_user):
             db.session.add(payment)
             db.session.commit()
 
-            # Send notification to owner about new payment
-            if owner:
-                notification_message = f"New payment initiated by {current_user.name} for ₹{total_amount:.2f}"
-                send_notification_to_owner(owner.id, notification_message)
-
             return jsonify({
                 'clientSecret': payment_intent.client_secret,
                 'amount': total_amount
@@ -746,11 +547,6 @@ def create_payment(current_user):
         payment.transaction_reference = reference
         db.session.add(payment)
         db.session.commit()
-
-        # Send notification to owner about new payment
-        if owner:
-            notification_message = f"New payment initiated by {current_user.name} for ₹{total_amount:.2f} via {payment_method}"
-            send_notification_to_owner(owner.id, notification_message)
 
         return jsonify({
             'reference': reference,
@@ -896,21 +692,8 @@ def accept_payment(current_user, payment_id):
     payment = Payment.query.get(payment_id)
     if not payment:
         return jsonify({'error': 'Payment not found'}), 404
-    
-    # Get tenant information
-    tenant = User.query.get(payment.user_id)
-    
     payment.status = 'completed'
     db.session.commit()
-    
-    # Send notification to tenant about payment acceptance
-    if tenant and tenant.id in connected_users:
-        notification_message = f"Your payment of ₹{payment.amount:.2f} has been accepted"
-        socketio.emit('notification', {
-            'message': notification_message,
-            'timestamp': datetime.utcnow().isoformat()
-        }, room=connected_users[tenant.id])
-    
     return jsonify({'message': 'Payment accepted', 'status': payment.status})
 
 @app.route('/api/owner/payments/<int:payment_id>/reject', methods=['POST'])
@@ -921,21 +704,8 @@ def reject_payment(current_user, payment_id):
     payment = Payment.query.get(payment_id)
     if not payment:
         return jsonify({'error': 'Payment not found'}), 404
-    
-    # Get tenant information
-    tenant = User.query.get(payment.user_id)
-    
     payment.status = 'rejected'
     db.session.commit()
-    
-    # Send notification to tenant about payment rejection
-    if tenant and tenant.id in connected_users:
-        notification_message = f"Your payment of ₹{payment.amount:.2f} has been rejected"
-        socketio.emit('notification', {
-            'message': notification_message,
-            'timestamp': datetime.utcnow().isoformat()
-        }, room=connected_users[tenant.id])
-    
     return jsonify({'message': 'Payment rejected', 'status': payment.status})
 
 @app.route('/api/owner/tenants/<int:tenant_id>', methods=['DELETE'])
@@ -972,21 +742,7 @@ def create_maintenance_request(current_user):
     )
     db.session.add(new_request)
     db.session.commit()
-    
-    # Get the owner of the tenant
-    tenant = User.query.get(current_user.id)
-    owner = User.query.get(tenant.owner_id) if tenant else None
-    
-    # Create notification message
-    notification_message = f"Maintenance request submitted by {current_user.name}"
-    
-    # Send real-time notification to owner if they are connected
-    if owner:
-        send_notification_to_owner(owner.id, notification_message)
-    
     print("New MaintenanceRequest created with ID:", new_request.id, "created_at:", new_request.created_at)
-    print("Notification:", notification_message)
-    
     return jsonify({
         'id': new_request.id,
         'tenantId': new_request.tenant_id,
@@ -994,8 +750,7 @@ def create_maintenance_request(current_user):
         'description': new_request.description,
         'priority': new_request.priority,
         'status': new_request.status,
-        'created_at': new_request.created_at.isoformat(),
-        'notification': notification_message
+        'created_at': new_request.created_at.isoformat()
     }), 201
 
 @app.route('/api/maintenance-requests/owner', methods=['GET'])
@@ -1116,18 +871,6 @@ def approve_maintenance_request(current_user, request_id):
     return jsonify({'message': 'Maintenance completion approved', 'status': req.status}), 200
 
 if __name__ == '__main__':
-    try:
-        with app.app_context():
-            db.create_all()
-        # Run the server with proper configuration
-        socketio.run(
-            app,
-            host='0.0.0.0',
-            port=5000,
-            debug=True,
-            use_reloader=False,  # Disable reloader when using scheduler
-            allow_unsafe_werkzeug=True
-        )
-    except Exception as e:
-        logger.error(f'Server startup error: {str(e)}')
-        raise 
+    with app.app_context():
+        db.create_all()
+    app.run(host='0.0.0.0', port=5000) 
