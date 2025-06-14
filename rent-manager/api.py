@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
@@ -40,9 +43,10 @@ login_manager.init_app(app)
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='eventlet',
+    async_mode='gevent',
     logger=True,
-    engineio_logger=True
+    engineio_logger=True,
+    message_queue=None
 )
 
 # Initialize scheduler
