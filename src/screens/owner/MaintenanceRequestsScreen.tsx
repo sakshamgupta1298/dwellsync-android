@@ -69,8 +69,22 @@ export const MaintenanceRequestsScreen = () => {
       fetchRequests(); // Refresh the list
     });
 
+    // Listen for maintenance notifications
+    const unsubscribeNotifications = socketService.onMaintenanceNotification((notification) => {
+      if (notification.type === 'new_request') {
+        showMessage({
+          message: 'New Maintenance Request',
+          description: notification.message,
+          type: 'info',
+          duration: 5000,
+        });
+        fetchRequests(); // Refresh the list
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeNotifications();
     };
   }, []);
 

@@ -1,10 +1,12 @@
 import { io, Socket } from 'socket.io-client';
 import { MaintenanceRequest } from '../types/maintenance';
 import { getToken } from '../utils/auth';
+import { useAuth } from '../hooks/useAuth';
 
 class SocketService {
   private socket: Socket | null = null;
   private maintenanceListeners: ((request: MaintenanceRequest) => void)[] = [];
+  private notificationListeners: ((notification: any) => void)[] = [];
 
   initialize() {
     if (this.socket) return;
@@ -20,6 +22,12 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('Socket connected');
+      // Authenticate user after connection
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      this.socket?.emit('authenticate', {
+        userId: user.id,
+        isOwner: user.is_owner,
+      });
     });
 
     this.socket.on('disconnect', () => {
@@ -28,6 +36,10 @@ class SocketService {
 
     this.socket.on('maintenanceUpdate', (request: MaintenanceRequest) => {
       this.maintenanceListeners.forEach(listener => listener(request));
+    });
+
+    this.socket.on('maintenanceNotification', (notification) => {
+      this.notificationListeners.forEach(listener => listener(notification));
     });
   }
 
@@ -42,6 +54,13 @@ class SocketService {
     this.maintenanceListeners.push(listener);
     return () => {
       this.maintenanceListeners = this.maintenanceListeners.filter(l => l !== listener);
+    };
+  }
+
+  onMaintenanceNotification(listener: (notification: any) => void) {
+    this.notificationListeners.push(listener);
+    return () => {
+      this.notificationListeners = this.notificationListeners.filter(l => l !== listener);
     };
   }
 }
