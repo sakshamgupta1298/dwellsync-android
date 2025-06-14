@@ -8,14 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Modal,
-  TouchableOpacity,
 } from 'react-native';
 import { Text, TextInput, Button, Surface } from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAuth } from '../../utils/AuthContext';
 import GradientBackground from '../GradientBackground';
-import { ownerService } from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -34,9 +31,6 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
-  const [forgotVisible, setForgotVisible] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!tenantId || !password) {
@@ -53,33 +47,6 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!forgotEmail) {
-      Alert.alert('Error', 'Please enter your email address');
-      return;
-    }
-    setForgotLoading(true);
-    try {
-      const response = await ownerService.forgotPassword(forgotEmail);
-      console.log('Forgot password response:', response);
-      if (response.message) {
-        Alert.alert('Success', response.message);
-        setForgotVisible(false);
-        setForgotEmail('');
-      } else {
-        Alert.alert('Error', 'Unexpected response from server');
-      }
-    } catch (e: any) {
-      console.error('Forgot password error:', e);
-      Alert.alert(
-        'Error',
-        e.response?.data?.error || 'Failed to send reset email. Please try again.'
-      );
-    } finally {
-      setForgotLoading(false);
     }
   };
 
@@ -141,9 +108,6 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
               underlineColor={NETFLIX_RED}
               selectionColor={NETFLIX_RED}
             />
-            <TouchableOpacity onPress={() => setForgotVisible(true)} style={{ alignSelf: 'flex-end', marginBottom: 12 }}>
-              <Text style={{ color: NETFLIX_RED, fontWeight: 'bold' }}>Forgot Password?</Text>
-            </TouchableOpacity>
             <Button
               mode="contained"
               style={styles.loginButton}
@@ -168,32 +132,6 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
             )}
           </Surface>
         </View>
-        <Modal visible={forgotVisible} transparent animationType="slide">
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(20,20,20,0.92)' }}>
-            <View style={{ backgroundColor: NETFLIX_CARD, padding: 24, borderRadius: 16, width: '85%' }}>
-              <Text style={{ color: '#fff', fontSize: 18, marginBottom: 12, fontWeight: 'bold', textAlign: 'center' }}>Reset Password</Text>
-              <TextInput
-                style={{ backgroundColor: '#181818', color: '#fff', borderRadius: 8, padding: 12, marginBottom: 16 }}
-                placeholder="Enter your email"
-                placeholderTextColor={NETFLIX_GRAY}
-                value={forgotEmail}
-                onChangeText={setForgotEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <TouchableOpacity
-                style={{ backgroundColor: NETFLIX_RED, borderRadius: 24, padding: 12, alignItems: 'center' }}
-                onPress={handleForgotPassword}
-                disabled={forgotLoading}
-              >
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{forgotLoading ? 'Sending...' : 'Send Reset Link'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setForgotVisible(false)} style={{ marginTop: 16 }}>
-                <Text style={{ color: NETFLIX_GRAY, textAlign: 'center' }}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </KeyboardAvoidingView>
     </View>
   );
