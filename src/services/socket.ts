@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { MaintenanceRequest } from '../types/maintenance';
 import { getToken } from '../utils/auth';
-import { useAuth } from '../hooks/useAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -20,14 +20,21 @@ class SocketService {
       },
     });
 
-    this.socket.on('connect', () => {
+    this.socket.on('connect', async () => {
       console.log('Socket connected');
       // Authenticate user after connection
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      this.socket?.emit('authenticate', {
-        userId: user.id,
-        isOwner: user.is_owner,
-      });
+      try {
+        const userStr = await AsyncStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          this.socket?.emit('authenticate', {
+            userId: user.id,
+            isOwner: user.is_owner,
+          });
+        }
+      } catch (error) {
+        console.error('Error getting user from AsyncStorage:', error);
+      }
     });
 
     this.socket.on('disconnect', () => {

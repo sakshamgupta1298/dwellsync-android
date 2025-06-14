@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, Dimensions } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import GradientBackground from '../GradientBackground';
+import { socketService } from '../../services/socket';
+import { showMessage } from 'react-native-flash-message';
 
 // Fallback OwnerOverviewSection if not yet implemented
 import OwnerOverviewSection from './OwnerOverviewSection';
@@ -18,11 +20,32 @@ const OwnerDashboardScreen = () => {
   const [index, setIndex] = useState(0);
   const [routes] = useState<RouteType[]>([
     { key: 'overview', title: 'Overview' },
-    { key: 'readings', title: 'Meter Readings' },
+    { key: 'readings', title: 'Readings' },
     { key: 'payments', title: 'Payments' },
     { key: 'tenants', title: 'Tenants' },
     { key: 'maintenance', title: 'Maintenance' },
   ]);
+
+  useEffect(() => {
+    // Initialize socket connection
+    socketService.initialize();
+
+    // Listen for maintenance notifications
+    const unsubscribe = socketService.onMaintenanceNotification((notification) => {
+      if (notification.type === 'new_request') {
+        showMessage({
+          message: 'New Maintenance Request',
+          description: notification.message,
+          type: 'info',
+          duration: 5000,
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const renderScene = SceneMap({
     overview: OwnerOverviewSection,
@@ -32,6 +55,15 @@ const OwnerDashboardScreen = () => {
     maintenance: MaintenanceRequestsScreen,
   });
 
+  const renderTabBar = (props: any) => (
+    <TabBar
+      {...props}
+      indicatorStyle={{ backgroundColor: '#E50914' }}
+      style={{ backgroundColor: '#141414' }}
+      labelStyle={{ color: '#fff' }}
+    />
+  );
+
   return (
     <GradientBackground>
       <TabView
@@ -39,16 +71,7 @@ const OwnerDashboardScreen = () => {
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={initialLayout}
-        renderTabBar={props => (
-          <TabBar
-            {...props}
-            indicatorStyle={{ backgroundColor: '#ff3e55' }}
-            style={{ backgroundColor: '#fff' }}
-            activeColor="#ff3e55"
-            inactiveColor="#000"
-            scrollEnabled={true}
-          />
-        )}
+        renderTabBar={renderTabBar}
       />
     </GradientBackground>
   );
