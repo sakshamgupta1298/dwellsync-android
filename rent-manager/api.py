@@ -40,11 +40,9 @@ login_manager.init_app(app)
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='eventlet',  # Use eventlet for better performance
+    async_mode='eventlet',
     logger=True,
-    engineio_logger=True,
-    ping_timeout=60,
-    ping_interval=25
+    engineio_logger=True
 )
 
 # Initialize scheduler
