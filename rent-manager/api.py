@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate, PasswordResetOTP
+from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -12,7 +12,6 @@ from functools import wraps
 from flask_cors import CORS
 import random
 import string
-from flask_mail import Message, Mail
 
 # Load environment variables
 load_dotenv()
@@ -23,20 +22,11 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///rentmanager.db')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 stripe.api_key = os.getenv('STRIPE_API_KEY')
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'mail.liveinsync.in')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'admin@liveinsync.in')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'admin@liveinsync.in')
-app.config['MAIL_MAX_EMAILS'] = 100  # Maximum number of emails to send per connection
-app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Allow non-ASCII characters in attachments
 
 # Initialize extensions
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-mail = Mail(app)
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -879,122 +869,6 @@ def approve_maintenance_request(current_user, request_id):
     req.status = 'closed'
     db.session.commit()
     return jsonify({'message': 'Maintenance completion approved', 'status': req.status}), 200
-
-@app.route('/api/request_password_reset', methods=['POST'])
-def request_password_reset():
-    if not request.is_json:
-        return jsonify({'error': 'Missing JSON in request'}), 400
-    
-    data = request.get_json()
-    email = data.get('email')
-    
-    if not email:
-        return jsonify({'error': 'Email is required'}), 400
-    
-    # Check if user exists
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Don't reveal that the email doesn't exist for security reasons
-        return jsonify({'message': 'If an account exists with this email, you will receive a password reset code'})
-    
-    # Generate OTP
-    otp = PasswordResetOTP.generate_otp()
-    print(f"Generated OTP: {otp}") # Added print for debugging
-    otp_record = PasswordResetOTP(email=email, otp=otp)
-    db.session.add(otp_record)
-    db.session.commit()
-    
-    # Send email with OTP
-    try:
-        print(f"Attempting to send OTP email to: {email} with OTP: {otp}")
-        msg = Message(
-            'Password Reset Code - LiveInSync',
-            sender=app.config['MAIL_DEFAULT_SENDER'],
-            recipients=[email]
-        )
-        msg.body = f'''Hello,
-
-You have requested to reset your password for your LiveInSync account.
-
-Your password reset code is: {otp}
-
-This code will expire in 15 minutes.
-
-If you did not request this password reset, please ignore this email or contact support if you have concerns.
-
-Best regards,
-LiveInSync Team'''
-        
-        msg.html = f'''
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #E50914;">Password Reset Request</h2>
-            <p>Hello,</p>
-            <p>You have requested to reset your password for your LiveInSync account.</p>
-            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
-                <p style="margin: 0; font-size: 24px; font-weight: bold; color: #E50914;">{otp}</p>
-            </div>
-            <p>This code will expire in 15 minutes.</p>
-            <p>If you did not request this password reset, please ignore this email or contact support if you have concerns.</p>
-            <hr style="border: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #666; font-size: 12px;">Best regards,<br>LiveInSync Team</p>
-        </div>
-        '''
-        
-        mail.send(msg)
-        print(f"OTP email successfully sent to {email}")
-    except Exception as e:
-        # Log the error but don't expose it to the user
-        app.logger.error(f'Failed to send password reset email: {str(e)}')
-        print(f"Error sending OTP email: {str(e)}") # Added print for debugging
-        return jsonify({'error': 'Failed to send password reset code'}), 500
-    
-    return jsonify({'message': 'If an account exists with this email, you will receive a password reset code'})
-
-@app.route('/api/verify_otp_and_reset_password', methods=['POST'])
-def verify_otp_and_reset_password():
-    if not request.is_json:
-        return jsonify({'error': 'Missing JSON in request'}), 400
-    
-    data = request.get_json()
-    email = data.get('email')
-    otp = data.get('otp')
-    new_password = data.get('new_password')
-    
-    if not all([email, otp, new_password]):
-        return jsonify({'error': 'Email, OTP, and new password are required'}), 400
-    
-    # Find the most recent valid OTP for this email
-    otp_record = PasswordResetOTP.query.filter_by(
-        email=email,
-        is_used=False
-    ).order_by(PasswordResetOTP.created_at.desc()).first()
-    
-    if not otp_record or not otp_record.is_valid() or otp_record.otp != otp:
-        return jsonify({'error': 'Invalid or expired OTP'}), 400
-    
-    # Find user and update password
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    user.set_password(new_password)
-    otp_record.is_used = True
-    db.session.commit()
-    
-    return jsonify({'message': 'Password has been reset successfully'})
-
-@app.route('/api/test_email', methods=['GET'])
-def test_email():
-    try:
-        msg = Message(
-            'Test Email',
-            recipients=[os.getenv('MAIL_DEFAULT_SENDER')]
-        )
-        msg.body = 'This is a test email from your Rent Manager application.'
-        mail.send(msg)
-        return jsonify({'message': 'Test email sent successfully'})
-    except Exception as e:
-        return jsonify({'error': f'Failed to send test email: {str(e)}'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

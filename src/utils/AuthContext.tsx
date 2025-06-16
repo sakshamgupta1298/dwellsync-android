@@ -17,8 +17,6 @@ interface AuthContextData {
   signOut: () => Promise<void>;
   registerOwner: (name: string, email: string, password: string) => Promise<void>;
   registerTenant: (name: string, rentAmount: number) => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<void>;
-  verifyOtpAndResetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -78,22 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const requestPasswordReset = async (email: string) => {
-    try {
-      await authService.requestPasswordReset(email);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const verifyOtpAndResetPassword = async (email: string, otp: string, newPassword: string) => {
-    try {
-      await authService.verifyOtpAndResetPassword(email, otp, newPassword);
-    } catch (error) {
-      throw error;
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -103,18 +85,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         registerOwner,
         registerTenant,
-        requestPasswordReset,
-        verifyOtpAndResetPassword,
       }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+} 

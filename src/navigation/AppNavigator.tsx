@@ -7,7 +7,6 @@ import { useAuth } from '../utils/AuthContext';
 import LoginScreen from '../screens/auth/LoginScreen';
 import OwnerRegisterScreen from '../screens/auth/OwnerRegisterScreen';
 import TenantRegisterScreen from '../screens/auth/TenantRegisterScreen';
-import PasswordResetScreen from '../screens/auth/PasswordResetScreen';
 
 // Tenant Screens
 import TenantDashboardScreen from '../screens/tenant/DashboardScreen';
@@ -83,7 +82,6 @@ const AppNavigator = () => {
             </Stack.Screen>
             <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
-            <Stack.Screen name="PasswordReset" component={PasswordResetScreen} options={{ headerShown: false }}/>
           </>
         ) : user.is_owner ? (
           // Owner Stack
