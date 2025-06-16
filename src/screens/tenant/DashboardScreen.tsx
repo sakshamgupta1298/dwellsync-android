@@ -61,25 +61,35 @@ const DashboardScreen = ({ navigation }: any) => {
   };
 
   const handlePayment = () => {
+    if (!dashboardData?.billing?.total) {
+      Alert.alert('No Amount Due', 'There is no outstanding amount to pay.');
+      return;
+    }
+
     const options = ['Cash', 'UPI', 'Debit/Credit Card', 'Cancel'];
     const paymentMethods = ['cash', 'upi', 'card'];
 
     const onSelect = async (index: number) => {
       if (index === 3) return; // Cancel
       const method = paymentMethods[index];
-      try {
-        const response = await tenantService.createPayment(method as any);
-        if (method === 'cash' || method === 'upi') {
+      
+      if (method === 'cash' || method === 'upi') {
+        try {
+          const response = await tenantService.createPayment(method as any);
           Alert.alert(
             'Payment Reference',
             `Reference Number: ${response.reference}\nAmount: ₹${response.amount}\n${response.message || ''}`
           );
-        } else if (method === 'card') {
-          // Handle Stripe or card payment flow here
-          Alert.alert('Card Payment', 'Proceed with card payment as per your backend integration.');
+        } catch (e: any) {
+          Alert.alert('Error', e.response?.data?.error || 'Failed to initiate payment');
         }
-      } catch (e: any) {
-        Alert.alert('Error', e.response?.data?.error || 'Failed to initiate payment');
+      } else if (method === 'card') {
+        // Navigate to PaymentScreen for card payments (Razorpay)
+        navigation.navigate('Payment', {
+          rentAmount: dashboardData.billing.total,
+          propertyId: user?.property_id || 'default_property_id', // Ensure property_id is correctly obtained
+          tenantId: user?.id, // Ensure tenantId is correctly obtained
+        });
       }
     };
 
@@ -97,7 +107,6 @@ const DashboardScreen = ({ navigation }: any) => {
         '',
         [
           { text: 'Cash', onPress: () => onSelect(0) },
-          { text: 'UPI', onPress: () => onSelect(1) },
           { text: 'Debit/Credit Card', onPress: () => onSelect(2) },
           { text: 'Cancel', style: 'cancel', onPress: () => {} },
         ]

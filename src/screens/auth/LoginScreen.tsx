@@ -118,6 +118,14 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
             >
               {loading ? <ActivityIndicator color="#fff" /> : 'Login'}
             </Button>
+            <Button
+              mode="text"
+              style={styles.forgotPasswordButton}
+              labelStyle={styles.forgotPasswordLabel}
+              onPress={() => navigation.navigate('PasswordReset')}
+            >
+              Forgot Password?
+            </Button>
             {showRegister && (
               <View style={styles.registerContainer}>
                 <Text style={styles.registerText}>Don't have an account?</Text>
@@ -225,6 +233,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 2,
     letterSpacing: 0.5,
+  },
+  forgotPasswordButton: {
+    marginTop: 8,
+  },
+  forgotPasswordLabel: {
+    color: NETFLIX_GRAY,
+    fontSize: 14,
   },
 });
 

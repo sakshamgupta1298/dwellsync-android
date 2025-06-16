@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 
 const NETFLIX_BG = '#141414';
@@ -17,7 +17,7 @@ const LoginSelectionScreen = ({ navigation }: any) => {
         <Button
           mode="contained"
           style={styles.button}
-          labelStyle={styles.buttonLabel}
+          labelStyle={styles.ownerButtonLabel}
           onPress={() => navigation.navigate('OwnerLogin')}
         >
           Login as Owner
@@ -25,7 +25,7 @@ const LoginSelectionScreen = ({ navigation }: any) => {
         <Button
           mode="contained"
           style={styles.button}
-          labelStyle={styles.buttonLabel}
+          labelStyle={styles.tenantButtonLabel}
           onPress={() => navigation.navigate('TenantLogin')}
         >
           Login as Tenant
@@ -56,12 +56,21 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     backgroundColor: NETFLIX_RED,
     elevation: 3,
+    paddingVertical: 8,
   },
-  buttonLabel: {
+  ownerButtonLabel: {
     fontSize: Math.max(14, width * 0.045),
     fontWeight: 'bold',
     color: '#fff',
     letterSpacing: 1,
+    fontFamily: Platform.OS === 'ios' ? 'ChalkboardSE-Bold' : 'serif',
+  },
+  tenantButtonLabel: {
+    fontSize: Math.max(14, width * 0.045),
+    fontWeight: 'bold',
+    color: '#fff',
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'ios' ? 'GeezaPro-Bold' : 'sans-serif-medium',
   },
 });
 

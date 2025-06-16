@@ -7,6 +7,7 @@ import { useAuth } from '../utils/AuthContext';
 import LoginScreen from '../screens/auth/LoginScreen';
 import OwnerRegisterScreen from '../screens/auth/OwnerRegisterScreen';
 import TenantRegisterScreen from '../screens/auth/TenantRegisterScreen';
+import PasswordResetScreen from '../screens/auth/PasswordResetScreen';
 
 // Tenant Screens
 import TenantDashboardScreen from '../screens/tenant/DashboardScreen';
@@ -70,14 +71,19 @@ const AppNavigator = () => {
           <>
             <Stack.Screen name="Landing" component={LandingScreen} options={{ headerShown: false }} />
             <Stack.Screen name="LoginSelection" component={LoginSelectionScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="OwnerLogin">
+            <Stack.Screen name="OwnerLogin"
+              options={{ headerShown: false }}
+            >
               {props => <LoginScreen {...props} showRegister={true} />}
             </Stack.Screen>
-            <Stack.Screen name="TenantLogin">
+            <Stack.Screen name="TenantLogin"
+              options={{ headerShown: false }}
+            >
               {props => <LoginScreen {...props} showRegister={false} />}
             </Stack.Screen>
             <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="PasswordReset" component={PasswordResetScreen} options={{ headerShown: false }}/>
           </>
         ) : user.is_owner ? (
           // Owner Stack
@@ -133,13 +139,13 @@ const AppNavigator = () => {
             <Stack.Screen 
               name="Payment" 
               component={PaymentScreen} 
-              options={{ 
+              options={{
                 headerShown: true,
                 title: 'Make Payment',
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: '#141414', // NETFLIX_BG
                 },
-                headerTintColor: '#000',
+                headerTintColor: '#fff', // White for text/icons
               }}
             />
           </>

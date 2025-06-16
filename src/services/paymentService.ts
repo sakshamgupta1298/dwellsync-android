@@ -1,4 +1,4 @@
-import RazorpayCheckout from '@razorpay/react-native-razorpay';
+import RazorpayCheckout from 'react-native-razorpay';
 import { Alert } from 'react-native';
 import { RAZORPAY_CONFIG } from '../config/razorpay';
 
@@ -19,7 +19,7 @@ export const initiatePayment = async (options: PaymentOptions) => {
       key: RAZORPAY_CONFIG.keyId,
       amount: options.amount * 100, // Convert to paise
       currency: options.currency,
-      name: 'DwellSync',
+      name: 'LiveInSync',
       description: options.description,
       image: 'https://your-logo-url.com/logo.png', // Replace with your logo URL
       prefill: {

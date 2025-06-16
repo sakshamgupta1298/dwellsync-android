@@ -70,6 +70,28 @@ export const authService = {
       throw error;
     }
   },
+
+  requestPasswordReset: async (email: string) => {
+    try {
+      const response = await api.post('/request_password_reset', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  verifyOtpAndResetPassword: async (email: string, otp: string, newPassword: string) => {
+    try {
+      const response = await api.post('/verify_otp_and_reset_password', {
+        email,
+        otp,
+        new_password: newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 // Tenant Services
@@ -88,11 +110,11 @@ export const tenantService = {
       const formData = new FormData();
       formData.append('reading_value', readingValue.toString());
       formData.append('meter_type', meterType);
-      formData.append('image', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'meter_reading.jpg',
-      });
+      
+      // Create a blob from the image URI
+      const imageResponse = await fetch(imageUri);
+      const blob = await imageResponse.blob();
+      formData.append('image', blob, 'meter_reading.jpg');
 
       const response = await api.post('/submit_reading', formData, {
         headers: {

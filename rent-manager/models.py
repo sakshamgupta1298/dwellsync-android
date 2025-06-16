@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
 import string
@@ -125,4 +125,28 @@ class MaintenanceRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
-    tenant = db.relationship('User', backref='maintenance_requests') 
+    tenant = db.relationship('User', backref='maintenance_requests')
+
+class PasswordResetOTP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    otp = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    is_used = db.Column(db.Boolean, default=False)
+
+    def __init__(self, email: str, otp: str):
+        self.email = email
+        self.otp = otp
+        self.expires_at = datetime.utcnow() + timedelta(minutes=15)  # OTP expires in 15 minutes
+
+    def is_expired(self) -> bool:
+        return datetime.utcnow() > self.expires_at
+
+    def is_valid(self) -> bool:
+        return not self.is_used and not self.is_expired()
+
+    @staticmethod
+    def generate_otp() -> str:
+        """Generate a 6-digit OTP"""
+        return ''.join(random.choices(string.digits, k=6)) 
