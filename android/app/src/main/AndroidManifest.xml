@@ -35,5 +35,11 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <activity
+        android:name="com.razorpay.CheckoutActivity"
+        android:theme="@style/CheckoutTheme"
+        android:exported="true">
+      </activity>
     </application>
 </manifest>

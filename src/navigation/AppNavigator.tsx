@@ -15,6 +15,7 @@ import PaymentHistoryScreen from '../screens/tenant/PaymentHistoryScreen';
 import TenantProfileScreen from '../screens/tenant/ProfileScreen';
 import { MaintenanceRequestScreen } from '../screens/tenant/MaintenanceRequestScreen';
 import MaintenanceHistoryScreen from '../screens/tenant/MaintenanceHistoryScreen';
+import PaymentScreen from '../screens/PaymentScreen';
 
 // Owner Screens
 import OwnerDashboardScreen from '../screens/owner/DashboardScreen';
@@ -26,7 +27,33 @@ import { MaintenanceRequestsScreen } from '../screens/owner/MaintenanceRequestsS
 import LandingScreen from '../screens/LandingScreen';
 import LoginSelectionScreen from '../screens/LoginSelectionScreen';
 
-const Stack = createNativeStackNavigator();
+// Define navigation param types
+type RootStackParamList = {
+  Landing: undefined;
+  LoginSelection: undefined;
+  OwnerLogin: undefined;
+  TenantLogin: undefined;
+  OwnerRegister: undefined;
+  TenantRegister: undefined;
+  OwnerDashboard: undefined;
+  TenantManagement: undefined;
+  BillManagement: undefined;
+  PaymentTracking: undefined;
+  MaintenanceRequests: undefined;
+  TenantDashboard: undefined;
+  MeterReading: undefined;
+  PaymentHistory: undefined;
+  TenantProfile: undefined;
+  MaintenanceRequest: undefined;
+  MaintenanceHistory: undefined;
+  Payment: {
+    rentAmount: number;
+    propertyId: string;
+    tenantId: string;
+  };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   const { user, loading } = useAuth();
@@ -97,6 +124,18 @@ const AppNavigator = () => {
               options={{ 
                 headerShown: true,
                 title: 'Maintenance History',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerTintColor: '#000',
+              }}
+            />
+            <Stack.Screen 
+              name="Payment" 
+              component={PaymentScreen} 
+              options={{ 
+                headerShown: true,
+                title: 'Make Payment',
                 headerStyle: {
                   backgroundColor: '#fff',
                 },
