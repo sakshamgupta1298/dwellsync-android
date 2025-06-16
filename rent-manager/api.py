@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
+from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate, PasswordResetOTP
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -899,6 +899,7 @@ def request_password_reset():
     
     # Generate OTP
     otp = PasswordResetOTP.generate_otp()
+    jsonify({'Generated OTP': {otp}})
     print(f"Generated OTP: {otp}") # Added print for debugging
     otp_record = PasswordResetOTP(email=email, otp=otp)
     db.session.add(otp_record)
