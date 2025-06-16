@@ -82,17 +82,27 @@ export const MaintenanceRequestScreen = () => {
 
     setLoading(true);
     try {
-      await maintenanceService.createRequest({
+      const response = await maintenanceService.createRequest({
         title: request.title,
         description: request.description,
         priority: request.priority,
       });
-      Alert.alert('Success', 'Maintenance request submitted successfully');
-      navigation.goBack();
-    } catch (error) {
+      
+      if (response) {
+        showMessage({
+          message: 'Success',
+          description: 'Maintenance request submitted successfully',
+          type: 'success',
+        });
+        navigation.goBack();
+      }
+    } catch (error: any) {
       console.error('Maintenance request error:', error);
-      console.log ('Maintenance request error:', error)
-      Alert.alert('Error', 'Failed to submit maintenance request');
+      showMessage({
+        message: 'Error',
+        description: error.response?.data?.message || 'Failed to submit maintenance request',
+        type: 'danger',
+      });
     } finally {
       setLoading(false);
     }
