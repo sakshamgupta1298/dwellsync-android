@@ -899,12 +899,14 @@ def request_password_reset():
     
     # Generate OTP
     otp = PasswordResetOTP.generate_otp()
+    print(f"Generated OTP: {otp}") # Added print for debugging
     otp_record = PasswordResetOTP(email=email, otp=otp)
     db.session.add(otp_record)
     db.session.commit()
     
     # Send email with OTP
     try:
+        print(f"Attempting to send OTP email to: {email} with OTP: {otp}")
         msg = Message(
             'Password Reset Code - LiveInSync',
             sender=app.config['MAIL_DEFAULT_SENDER'],
@@ -939,9 +941,11 @@ LiveInSync Team'''
         '''
         
         mail.send(msg)
+        print(f"OTP email successfully sent to {email}")
     except Exception as e:
         # Log the error but don't expose it to the user
         app.logger.error(f'Failed to send password reset email: {str(e)}')
+        print(f"Error sending OTP email: {str(e)}") # Added print for debugging
         return jsonify({'error': 'Failed to send password reset code'}), 500
     
     return jsonify({'message': 'If an account exists with this email, you will receive a password reset code'})
