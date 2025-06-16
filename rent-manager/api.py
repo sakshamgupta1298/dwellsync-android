@@ -899,7 +899,6 @@ def request_password_reset():
     
     # Generate OTP
     otp = PasswordResetOTP.generate_otp()
-    jsonify({'Generated OTP': {otp}})
     print(f"Generated OTP: {otp}") # Added print for debugging
     otp_record = PasswordResetOTP(email=email, otp=otp)
     db.session.add(otp_record)
