@@ -17,10 +17,12 @@ import string
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for API
+# Configure CORS to allow all origins and methods
+CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]}})
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///rentmanager.db')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress the warning
 stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 # Initialize extensions
