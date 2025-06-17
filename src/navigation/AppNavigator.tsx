@@ -9,7 +9,7 @@ import OwnerRegisterScreen from '../screens/auth/OwnerRegisterScreen';
 import TenantRegisterScreen from '../screens/auth/TenantRegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
-import { PasswordResetScreen } from '../screens/PasswordResetScreen';
+import OTPVerificationScreen from '../screens/auth/OTPVerificationScreen';
 
 // Tenant Screens
 import TenantDashboardScreen from '../screens/tenant/DashboardScreen';
@@ -39,8 +39,8 @@ type RootStackParamList = {
   OwnerRegister: undefined;
   TenantRegister: undefined;
   ForgotPassword: undefined;
-  ResetPassword: { token?: string };
-  PasswordReset: undefined;
+  OTPVerification: { email: string };
+  ResetPassword: { email: string };
   OwnerDashboard: undefined;
   TenantManagement: undefined;
   BillManagement: undefined;
@@ -89,8 +89,8 @@ const AppNavigator = () => {
             <Stack.Screen name="OwnerRegister" component={OwnerRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }}/>
-            <Stack.Screen name="PasswordReset" component={PasswordResetScreen} options={{ headerShown: false }}/>
           </>
         ) : user.is_owner ? (
           // Owner Stack

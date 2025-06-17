@@ -70,37 +70,6 @@ export const authService = {
       throw error;
     }
   },
-
-  requestPasswordReset: async (email: string) => {
-    try {
-      const response = await api.post('/request-password-reset', { email });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  verifyResetCode: async (email: string, code: string) => {
-    try {
-      const response = await api.post('/verify-reset-code', { email, code });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  resetPassword: async (email: string, code: string, newPassword: string) => {
-    try {
-      const response = await api.post('/reset-password', {
-        email,
-        code,
-        new_password: newPassword
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
 };
 
 // Tenant Services

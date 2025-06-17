@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate, PasswordResetCode
+from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ from functools import wraps
 from flask_cors import CORS
 import random
 import string
+from flask_mail import Message
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
@@ -26,6 +27,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ren
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress the warning
 stripe.api_key = os.getenv('STRIPE_API_KEY')
+
+# SendGrid configuration
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', 'noreply@yourdomain.com')
 
 # Initialize extensions
 db.init_app(app)
@@ -874,130 +879,132 @@ def approve_maintenance_request(current_user, request_id):
     db.session.commit()
     return jsonify({'message': 'Maintenance completion approved', 'status': req.status}), 200
 
-def send_reset_email(email, code):
-    """Send password reset code via SendGrid"""
-    sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
-    from_email = Email(os.getenv('SENDGRID_FROM_EMAIL'))
-    to_email = To(email)
-    subject = "Password Reset Code"
-    
-    body = f"""
-    Hello,
-
-    You have requested to reset your password. Your verification code is:
-
-    {code}
-
-    This code will expire in 15 minutes.
-
-    If you did not request this password reset, please ignore this email.
-
-    Best regards,
-    Rent Manager Team
-    """
-
-    content = Content("text/plain", body)
-    mail = Mail(from_email, to_email, subject, content)
-
+# Password Reset Routes
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
     try:
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(mail)
-        if response.status_code not in [200, 201, 202]:
-            raise Exception(f"SendGrid API returned status code {response.status_code}")
-    except Exception as e:
-        print(f"Failed to send email: {str(e)}")
-        raise
-
-@app.route('/api/request-password-reset', methods=['POST'])
-def request_password_reset():
-    data = request.get_json()
-    email = data.get('email')
-
-    if not email:
-        return jsonify({'error': 'Email is required'}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Don't reveal that the email doesn't exist
-        return jsonify({'message': 'If your email is registered, you will receive a reset code'}), 200
-
-    # Generate a 6-digit code
-    code = ''.join(random.choices(string.digits, k=6))
-    
-    # Create reset code record
-    reset_code = PasswordResetCode(
-        user_id=user.id,
-        code=code,
-        expires_at=datetime.utcnow() + timedelta(minutes=15)
-    )
-    
-    # Invalidate any existing unused codes
-    PasswordResetCode.query.filter_by(user_id=user.id, is_used=False).update({'is_used': True})
-    
-    db.session.add(reset_code)
-    db.session.commit()
-
-    try:
-        send_reset_email(email, code)
-        return jsonify({'message': 'If your email is registered, you will receive a reset code'}), 200
-    except Exception as e:
-        db.session.delete(reset_code)
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'message': 'Email is required'}), 400
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'message': 'User with that email does not exist'}), 404
+            
+        # Generate 6-digit OTP
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Store OTP and expiry in user record
+        user.reset_password_otp = otp
+        user.reset_password_expires = datetime.utcnow() + timedelta(minutes=5)
         db.session.commit()
-        return jsonify({'error': 'Failed to send reset code'}), 500
+        
+        # Send email with OTP using SendGrid
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        from_email = Email(SENDGRID_FROM_EMAIL)
+        to_email = To(email)
+        subject = "Password Reset OTP"
+        
+        # Create HTML content for the email
+        html_content = f"""
+        <html>
+            <body>
+                <h2>Password Reset Request</h2>
+                <p>You are receiving this because you (or someone else) have requested to reset the password for your account.</p>
+                <p>Your OTP is: <strong>{otp}</strong></p>
+                <p>This OTP will expire in 5 minutes.</p>
+                <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+                <br>
+                <p>Best regards,<br>Your App Team</p>
+            </body>
+        </html>
+        """
+        
+        # Create plain text content for the email
+        text_content = f"""
+        You are receiving this because you (or someone else) have requested to reset the password for your account.
+        
+        Your OTP is: {otp}
+        
+        This OTP will expire in 5 minutes.
+        
+        If you did not request this, please ignore this email and your password will remain unchanged.
+        """
+        
+        # Create the email message
+        message = Mail(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=subject,
+            html_content=Content("text/html", html_content),
+            plain_text_content=Content("text/plain", text_content)
+        )
+        
+        # Send the email
+        response = sg.send(message)
+        
+        if response.status_code == 202:
+            return jsonify({'message': 'OTP sent to your email'}), 200
+        else:
+            app.logger.error(f"SendGrid error: {response.status_code}")
+            return jsonify({'message': 'Failed to send OTP email'}), 500
+        
+    except Exception as e:
+        app.logger.error(f"Error in forgot_password: {str(e)}")
+        return jsonify({'message': 'Server error'}), 500
 
-@app.route('/api/verify-reset-code', methods=['POST'])
-def verify_reset_code():
-    data = request.get_json()
-    email = data.get('email')
-    code = data.get('code')
+@app.route('/api/auth/verify-otp', methods=['POST'])
+def verify_otp():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        otp = data.get('otp')
+        
+        if not email or not otp:
+            return jsonify({'message': 'Email and OTP are required'}), 400
+            
+        user = User.query.filter_by(
+            email=email,
+            reset_password_otp=otp,
+            reset_password_expires=datetime.utcnow()
+        ).first()
+        
+        if not user:
+            return jsonify({'message': 'Invalid or expired OTP'}), 400
+            
+        return jsonify({'verified': True}), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error in verify_otp: {str(e)}")
+        return jsonify({'message': 'Server error'}), 500
 
-    if not email or not code:
-        return jsonify({'error': 'Email and code are required'}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({'error': 'Invalid email or code'}), 400
-
-    reset_code = PasswordResetCode.query.filter_by(
-        user_id=user.id,
-        code=code,
-        is_used=False
-    ).first()
-
-    if not reset_code or reset_code.expires_at < datetime.utcnow():
-        return jsonify({'error': 'Invalid or expired code'}), 400
-
-    return jsonify({'message': 'Code verified successfully'}), 200
-
-@app.route('/api/reset-password', methods=['POST'])
+@app.route('/api/auth/reset-password', methods=['POST'])
 def reset_password():
-    data = request.get_json()
-    email = data.get('email')
-    code = data.get('code')
-    new_password = data.get('new_password')
-
-    if not all([email, code, new_password]):
-        return jsonify({'error': 'Email, code, and new password are required'}), 400
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({'error': 'Invalid email or code'}), 400
-
-    reset_code = PasswordResetCode.query.filter_by(
-        user_id=user.id,
-        code=code,
-        is_used=False
-    ).first()
-
-    if not reset_code or reset_code.expires_at < datetime.utcnow():
-        return jsonify({'error': 'Invalid or expired code'}), 400
-
-    # Update password
-    user.set_password(new_password)
-    reset_code.is_used = True
-    db.session.commit()
-
-    return jsonify({'message': 'Password has been reset successfully'}), 200
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        new_password = data.get('newPassword')
+        
+        if not email or not new_password:
+            return jsonify({'message': 'Email and new password are required'}), 400
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+            
+        # Update password
+        user.set_password(new_password)
+        user.reset_password_otp = None
+        user.reset_password_expires = None
+        db.session.commit()
+        
+        return jsonify({'message': 'Password has been reset successfully'}), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error in reset_password: {str(e)}")
+        return jsonify({'message': 'Server error'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

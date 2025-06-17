@@ -109,6 +109,14 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
               selectionColor={NETFLIX_RED}
             />
             <Button
+              mode="text"
+              labelStyle={styles.forgotPasswordLink}
+              onPress={() => navigation.navigate('ForgotPassword')}
+              style={styles.forgotPasswordButton}
+            >
+              Forgot Password?
+            </Button>
+            <Button
               mode="contained"
               style={styles.loginButton}
               contentStyle={{ paddingVertical: 12 }}
@@ -225,6 +233,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 2,
     letterSpacing: 0.5,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+    marginBottom: 8,
+  },
+  forgotPasswordLink: {
+    color: NETFLIX_GRAY,
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
 

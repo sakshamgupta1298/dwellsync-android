@@ -23,6 +23,9 @@ class User(UserMixin, db.Model):
     meter_readings = db.relationship('MeterReading', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Password reset fields
+    reset_password_otp = db.Column(db.String(6), nullable=True)
+    reset_password_expires = db.Column(db.DateTime, nullable=True)
     # Relationship for owner to access their tenants
     tenants = db.relationship('User', backref=db.backref('owner', remote_side=[id]), lazy=True)
 
@@ -125,14 +128,4 @@ class MaintenanceRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
-    tenant = db.relationship('User', backref='maintenance_requests')
-
-class PasswordResetCode(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    code = db.Column(db.String(6), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False)
-    is_used = db.Column(db.Boolean, default=False)
-
-    user = db.relationship('User', backref='password_reset_codes') 
+    tenant = db.relationship('User', backref='maintenance_requests') 

@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../../services/api';
 const ResetPasswordScreen = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { token } = route.params || {};
+  const { email } = route.params;
 
   const handleSubmit = async () => {
     if (password !== confirmPassword) {
@@ -14,10 +14,19 @@ const ResetPasswordScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
+      return;
+    }
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, { token, newPassword: password });
+      const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+        email,
+        newPassword: password
+      });
+      
       Alert.alert('Success', response.data.message);
-      navigation.navigate('Login'); // Navigate back to login or a success screen
+      navigation.navigate('Login'); // Navigate back to login
     } catch (error) {
       console.error(error);
       Alert.alert('Error', error.response?.data?.message || 'Something went wrong');
@@ -27,14 +36,10 @@ const ResetPasswordScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Reset Password</Text>
-      {!token && (
-        <TextInput
-          style={styles.input}
-          placeholder="Enter reset token (if not from link)"
-          value={token}
-          onChangeText={(text) => route.params = { token: text }}
-        />
-      )}
+      <Text style={styles.subtitle}>
+        Please enter your new password
+      </Text>
+      
       <TextInput
         style={styles.input}
         placeholder="Enter new password"
@@ -42,6 +47,7 @@ const ResetPasswordScreen = ({ navigation, route }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
+      
       <TextInput
         style={styles.input}
         placeholder="Confirm new password"
@@ -49,6 +55,7 @@ const ResetPasswordScreen = ({ navigation, route }) => {
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
+      
       <Button title="Reset Password" onPress={handleSubmit} />
     </View>
   );
@@ -65,8 +72,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     color: '#333',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     width: '100%',

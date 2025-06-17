@@ -3,16 +3,23 @@ import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { API_BASE_URL } from '../../services/api';
 
-const ForgotPasswordScreen = () => {
+const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+
     try {
+      setLoading(true);
       const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email });
-      setMessage(response.data.message);
-      Alert.alert('Success', response.data.message);
+      setLoading(false);
+      navigation.navigate('OTPVerification', { email });
     } catch (error) {
+      setLoading(false);
       console.error(error);
       Alert.alert('Error', error.response?.data?.message || 'Something went wrong');
     }
@@ -21,6 +28,10 @@ const ForgotPasswordScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Forgot Password</Text>
+      <Text style={styles.subtitle}>
+        Enter your email address and we'll send you a verification code
+      </Text>
+      
       <TextInput
         style={styles.input}
         placeholder="Enter your email"
@@ -28,9 +39,14 @@ const ForgotPasswordScreen = () => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!loading}
       />
-      <Button title="Send Reset Link" onPress={handleSubmit} />
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      
+      <Button 
+        title={loading ? "Sending..." : "Send Verification Code"} 
+        onPress={handleSubmit}
+        disabled={loading}
+      />
     </View>
   );
 };
@@ -46,8 +62,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     color: '#333',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     width: '100%',
@@ -57,11 +79,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     backgroundColor: '#fff',
-  },
-  message: {
-    marginTop: 20,
-    color: 'green',
-    textAlign: 'center',
   },
 });
 

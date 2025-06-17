@@ -10,6 +10,7 @@ export interface IUser {
   propertyId?: string;
   tenant_id?: string;
   resetPasswordToken?: string;
+  resetPasswordOTP?: string;
   resetPasswordExpires?: Date;
 }
 
@@ -27,6 +28,7 @@ const userSchema = new Schema<IUser>({
     required: false,
   },
   resetPasswordToken: String,
+  resetPasswordOTP: String,
   resetPasswordExpires: Date,
   is_owner: {
     type: Boolean,
