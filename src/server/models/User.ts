@@ -4,10 +4,13 @@ export interface IUser {
   id: string;
   name: string;
   email?: string;
+  password?: string;
   is_owner: boolean;
   ownerId?: string;
   propertyId?: string;
   tenant_id?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const userSchema = new Schema<IUser>({
@@ -19,6 +22,12 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: false,
   },
+  password: {
+    type: String,
+    required: false,
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   is_owner: {
     type: Boolean,
     default: false,
