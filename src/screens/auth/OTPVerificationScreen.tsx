@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../../services/api';
-import axios, { AxiosError } from 'axios';
 
 const OTPVerificationScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(300); // 5 minutes in seconds
   const [loading, setLoading] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const { email } = route.params;
+
+  const addLog = (message: string) => {
+    console.log(message);
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -46,30 +51,38 @@ const OTPVerificationScreen = ({ navigation, route }) => {
       
       // Get stored OTP data
       const storedOTPData = await AsyncStorage.getItem('resetPasswordOTP');
+      addLog('Retrieved stored OTP data: ' + storedOTPData);
+      
       if (!storedOTPData) {
+        addLog('No OTP data found in storage');
         Alert.alert('Error', 'OTP has expired. Please request a new one.');
         return;
       }
 
       const { otp: storedOTP, expiresAt } = JSON.parse(storedOTPData);
+      addLog(`Parsed OTP data: storedOTP=${storedOTP}, expiresAt=${new Date(expiresAt).toLocaleString()}, currentTime=${new Date().toLocaleString()}`);
       
       // Check if OTP has expired
       if (Date.now() > expiresAt) {
+        addLog('OTP has expired');
         await AsyncStorage.removeItem('resetPasswordOTP');
         Alert.alert('Error', 'OTP has expired. Please request a new one.');
         return;
       }
 
       // Verify OTP
+      addLog(`Comparing OTPs: enteredOTP=${otp}, storedOTP=${storedOTP}`);
       if (otp === storedOTP) {
+        addLog('OTP verification successful');
         // Clear the OTP from storage
         await AsyncStorage.removeItem('resetPasswordOTP');
         navigation.navigate('ResetPassword', { email });
       } else {
+        addLog('OTP verification failed - OTPs do not match');
         Alert.alert('Error', 'Invalid OTP. Please try again.');
       }
     } catch (error) {
-      console.error('OTP verification error:', error);
+      addLog('OTP verification error: ' + JSON.stringify(error));
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -79,24 +92,28 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const handleResendOTP = async () => {
     try {
       setLoading(true);
+      addLog('Requesting new OTP for email: ' + email);
       const response = await authService.forgotPassword(email);
+      addLog('New OTP response: ' + JSON.stringify(response));
       
       // Store new OTP in AsyncStorage with expiration
       const otpData = {
         otp: response.otp,
         expiresAt: Date.now() + 300000 // 5 minutes from now
       };
+      addLog('Storing new OTP data: ' + JSON.stringify(otpData));
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
       
       // Set up auto-deletion after 5 minutes
       setTimeout(async () => {
         await AsyncStorage.removeItem('resetPasswordOTP');
+        addLog('OTP data auto-deleted after 5 minutes');
       }, 300000);
 
       setTimer(300); // Reset timer
       Alert.alert('Success', 'New OTP has been sent to your email');
     } catch (error) {
-      console.error('Resend OTP error:', error);
+      addLog('Resend OTP error: ' + JSON.stringify(error));
       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);
@@ -138,6 +155,16 @@ const OTPVerificationScreen = ({ navigation, route }) => {
           color="#666"
         />
       )}
+
+      {/* Debug View */}
+      <View style={styles.debugContainer}>
+        <Text style={styles.debugTitle}>Debug Logs:</Text>
+        <ScrollView style={styles.debugLogs}>
+          {debugLogs.map((log, index) => (
+            <Text key={index} style={styles.debugLog}>{log}</Text>
+          ))}
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -177,6 +204,29 @@ const styles = StyleSheet.create({
   timer: {
     marginBottom: 20,
     color: '#666',
+  },
+  debugContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 10,
+    maxHeight: 200,
+  },
+  debugTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  debugLogs: {
+    maxHeight: 150,
+  },
+  debugLog: {
+    color: '#fff',
+    fontSize: 12,
+    marginBottom: 2,
   },
 });
 

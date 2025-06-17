@@ -23,17 +23,24 @@ const ForgotPasswordScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await authService.forgotPassword(email);
+      console.log('Forgot password response:', response);
       
       // Store OTP in AsyncStorage with expiration
       const otpData = {
         otp: response.otp, // Assuming the API returns the OTP
         expiresAt: Date.now() + 300000 // 5 minutes from now
       };
+      console.log('Storing OTP data:', otpData);
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
+      
+      // Verify the stored data
+      const storedData = await AsyncStorage.getItem('resetPasswordOTP');
+      console.log('Verified stored OTP data:', JSON.parse(storedData));
       
       // Set up auto-deletion after 5 minutes
       setTimeout(async () => {
         await AsyncStorage.removeItem('resetPasswordOTP');
+        console.log('OTP data auto-deleted after 5 minutes');
       }, 300000);
 
       navigation.navigate('OTPVerification', { email });
