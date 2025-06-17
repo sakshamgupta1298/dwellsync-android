@@ -1,14 +1,17 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from '../config';
 
-const API_URL = 'http://liveinsync.in:5000/api'; // Replace with your actual backend URL
-// const API_URL = 'http://10.0.2.2:8081/api';
+// Use the correct backend URL from config
+const API_URL = config.production.apiUrl;
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // Add timeout of 10 seconds
 });
 
 // Add token to requests
@@ -21,6 +24,15 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
