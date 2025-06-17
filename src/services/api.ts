@@ -1,9 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { config } from '../config';
 
-// Use the correct backend URL from config
-const API_URL = config.production.apiUrl;
+// Use the correct backend URL
+const API_URL = 'http://liveinsync.in:5000/api'; // Match the working Postman endpoint
 
 // Create axios instance
 const api = axios.create({
@@ -11,7 +10,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Add timeout of 10 seconds
 });
 
 // Add token to requests
