@@ -130,18 +130,18 @@ export const tenantService = {
       const formData = new FormData();
       formData.append('reading_value', readingValue.toString());
       formData.append('meter_type', meterType);
+      formData.append('image', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: 'meter_reading.jpg',
+      });
 
-      // Fetch the image from the URI and append as a Blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      formData.append('image', blob, 'meter_reading.jpg');
-
-      const apiResponse = await api.post('/submit_reading', formData, {
+      const response = await api.post('/submit_reading', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return apiResponse.data;
+      return response.data;
     } catch (error) {
       throw error;
     }
