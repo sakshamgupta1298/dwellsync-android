@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate
+from models import db, User, MeterReading, Payment, ElectricityRate, WaterBill, MaintenanceRequest, OwnerElectricityRate, PasswordResetCode
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
@@ -12,6 +12,8 @@ from functools import wraps
 from flask_cors import CORS
 import random
 import string
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
 
 # Load environment variables
 load_dotenv()
@@ -871,6 +873,131 @@ def approve_maintenance_request(current_user, request_id):
     req.status = 'closed'
     db.session.commit()
     return jsonify({'message': 'Maintenance completion approved', 'status': req.status}), 200
+
+def send_reset_email(email, code):
+    """Send password reset code via SendGrid"""
+    sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+    from_email = Email(os.getenv('SENDGRID_FROM_EMAIL'))
+    to_email = To(email)
+    subject = "Password Reset Code"
+    
+    body = f"""
+    Hello,
+
+    You have requested to reset your password. Your verification code is:
+
+    {code}
+
+    This code will expire in 15 minutes.
+
+    If you did not request this password reset, please ignore this email.
+
+    Best regards,
+    Rent Manager Team
+    """
+
+    content = Content("text/plain", body)
+    mail = Mail(from_email, to_email, subject, content)
+
+    try:
+        sg = SendGridAPIClient(sendgrid_api_key)
+        response = sg.send(mail)
+        if response.status_code not in [200, 201, 202]:
+            raise Exception(f"SendGrid API returned status code {response.status_code}")
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+        raise
+
+@app.route('/api/request-password-reset', methods=['POST'])
+def request_password_reset():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Don't reveal that the email doesn't exist
+        return jsonify({'message': 'If your email is registered, you will receive a reset code'}), 200
+
+    # Generate a 6-digit code
+    code = ''.join(random.choices(string.digits, k=6))
+    
+    # Create reset code record
+    reset_code = PasswordResetCode(
+        user_id=user.id,
+        code=code,
+        expires_at=datetime.utcnow() + timedelta(minutes=15)
+    )
+    
+    # Invalidate any existing unused codes
+    PasswordResetCode.query.filter_by(user_id=user.id, is_used=False).update({'is_used': True})
+    
+    db.session.add(reset_code)
+    db.session.commit()
+
+    try:
+        send_reset_email(email, code)
+        return jsonify({'message': 'If your email is registered, you will receive a reset code'}), 200
+    except Exception as e:
+        db.session.delete(reset_code)
+        db.session.commit()
+        return jsonify({'error': 'Failed to send reset code'}), 500
+
+@app.route('/api/verify-reset-code', methods=['POST'])
+def verify_reset_code():
+    data = request.get_json()
+    email = data.get('email')
+    code = data.get('code')
+
+    if not email or not code:
+        return jsonify({'error': 'Email and code are required'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'Invalid email or code'}), 400
+
+    reset_code = PasswordResetCode.query.filter_by(
+        user_id=user.id,
+        code=code,
+        is_used=False
+    ).first()
+
+    if not reset_code or reset_code.expires_at < datetime.utcnow():
+        return jsonify({'error': 'Invalid or expired code'}), 400
+
+    return jsonify({'message': 'Code verified successfully'}), 200
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    email = data.get('email')
+    code = data.get('code')
+    new_password = data.get('new_password')
+
+    if not all([email, code, new_password]):
+        return jsonify({'error': 'Email, code, and new password are required'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'Invalid email or code'}), 400
+
+    reset_code = PasswordResetCode.query.filter_by(
+        user_id=user.id,
+        code=code,
+        is_used=False
+    ).first()
+
+    if not reset_code or reset_code.expires_at < datetime.utcnow():
+        return jsonify({'error': 'Invalid or expired code'}), 400
+
+    # Update password
+    user.set_password(new_password)
+    reset_code.is_used = True
+    db.session.commit()
+
+    return jsonify({'message': 'Password has been reset successfully'}), 200
 
 if __name__ == '__main__':
     with app.app_context():

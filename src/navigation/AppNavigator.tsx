@@ -9,6 +9,7 @@ import OwnerRegisterScreen from '../screens/auth/OwnerRegisterScreen';
 import TenantRegisterScreen from '../screens/auth/TenantRegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import { PasswordResetScreen } from '../screens/PasswordResetScreen';
 
 // Tenant Screens
 import TenantDashboardScreen from '../screens/tenant/DashboardScreen';
@@ -39,6 +40,7 @@ type RootStackParamList = {
   TenantRegister: undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
+  PasswordReset: undefined;
   OwnerDashboard: undefined;
   TenantManagement: undefined;
   BillManagement: undefined;
@@ -88,6 +90,7 @@ const AppNavigator = () => {
             <Stack.Screen name="TenantRegister" component={TenantRegisterScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="PasswordReset" component={PasswordResetScreen} options={{ headerShown: false }}/>
           </>
         ) : user.is_owner ? (
           // Owner Stack
