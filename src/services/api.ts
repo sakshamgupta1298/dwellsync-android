@@ -71,20 +71,17 @@ export const authService = {
     }
   },
 
-  forgotPassword: async (email: string): Promise<{ message: string; otp?: string }> => {
+  forgotPassword: async (email: string) => {
     try {
       console.log('Sending forgot password request for email:', email);
       const response = await api.post('/auth/forgot-password', { email });
       console.log('Server response:', response.data);
       
-      // Ensure the response data is typed correctly
-      const responseData = response.data as { message: string; otp?: string };
-      
       // For development/testing, we'll return the OTP in the response
       // In production, this should be removed and OTP should only be sent via email
       const result = {
-        ...responseData,
-        otp: responseData.otp // Ensure we're reading from the typed responseData
+        ...response.data,
+        otp: response.data.otp // This should be removed in production
       };
       console.log('Returning to client:', result);
       return result;
