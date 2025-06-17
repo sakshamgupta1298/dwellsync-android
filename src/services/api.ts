@@ -1,12 +1,11 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Use the correct backend URL
-const API_URL = 'http://liveinsync.in:5000/api'; // Match the working Postman endpoint
-
+export const API_BASE_URL = 'http://liveinsync.in:5000/api'; // Replace with your actual backend URL
+// const API_URL = 'http://10.0.2.2:8081/api';
 // Create axios instance
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,15 +21,6 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
@@ -77,6 +67,39 @@ export const authService = {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
     } catch (error) {
+      throw error;
+    }
+  },
+
+  forgotPassword: async (email: string) => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      // For development/testing, we'll return the OTP in the response
+      // In production, this should be removed and OTP should only be sent via email
+      return {
+        ...response.data,
+        otp: response.data.otp // This should be removed in production
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  verifyOTP: async (email: string, otp: string) => {
+    try {
+      console.log('Making OTP verification request:', { email, otp });
+      const response = await api.post('/auth/verify-otp', { email, otp });
+      console.log('OTP verification API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('OTP verification API error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('API Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+      }
       throw error;
     }
   },

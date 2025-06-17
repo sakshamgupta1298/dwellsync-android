@@ -62,6 +62,8 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
+    console.log('Verifying OTP:', { email, otp });
+    console.log('Current time:', new Date());
 
     const user = await UserModel.findOne({
       email,
@@ -70,12 +72,17 @@ router.post('/verify-otp', async (req, res) => {
     });
 
     if (!user) {
+      console.log('OTP verification failed. User not found or OTP expired.');
+      console.log('Stored OTP:', user?.resetPasswordOTP);
+      console.log('Expiration time:', user?.resetPasswordExpires);
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
+    console.log('OTP verified successfully');
+    console.log('Expiration time:', user.resetPasswordExpires);
     res.status(200).json({ verified: true });
   } catch (error) {
-    console.error(error);
+    console.error('Error in verify_otp:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

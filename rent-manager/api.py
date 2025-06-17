@@ -887,82 +887,68 @@ def forgot_password():
         email = data.get('email')
         
         if not email:
-            app.logger.error("Email is missing in request")
             return jsonify({'message': 'Email is required'}), 400
             
         user = User.query.filter_by(email=email).first()
         if not user:
-            app.logger.error(f"No user found with email: {email}")
             return jsonify({'message': 'User with that email does not exist'}), 404
             
         # Generate 6-digit OTP
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        app.logger.info(f"Generated OTP for {email}: {otp}")
         
         # Store OTP and expiry in user record
         user.reset_password_otp = otp
         user.reset_password_expires = datetime.utcnow() + timedelta(minutes=5)
         db.session.commit()
-        app.logger.info(f"Stored OTP in database for {email}")
         
         # Send email with OTP using SendGrid
-        try:
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
-            from_email = Email(SENDGRID_FROM_EMAIL)
-            to_email = To(email)
-            subject = "Password Reset OTP"
-            
-            # Create HTML content for the email
-            html_content = f"""
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <h2 style="color: #2c3e50;">Password Reset Request</h2>
-                        <p>You are receiving this because you (or someone else) have requested to reset the password for your account.</p>
-                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                            <p style="margin: 0; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px;">{otp}</p>
-                        </div>
-                        <p>This OTP will expire in 5 minutes.</p>
-                        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-                        <hr style="border: 1px solid #eee; margin: 20px 0;">
-                        <p style="color: #666; font-size: 12px;">Best regards,<br>Your App Team</p>
-                    </div>
-                </body>
-            </html>
-            """
-            
-            # Create plain text content for the email
-            text_content = f"""
-            You are receiving this because you (or someone else) have requested to reset the password for your account.
-            
-            Your OTP is: {otp}
-            
-            This OTP will expire in 5 minutes.
-            
-            If you did not request this, please ignore this email and your password will remain unchanged.
-            """
-            
-            # Create the email message
-            message = Mail(
-                from_email=from_email,
-                to_emails=to_email,
-                subject=subject,
-                html_content=Content("text/html", html_content),
-                plain_text_content=Content("text/plain", text_content)
-            )
-            
-            # Send the email
-            response = sg.send(message)
-            app.logger.info(f"SendGrid response status: {response.status_code}")
-            
-            if response.status_code == 202:
-                return jsonify({'message': 'OTP sent to your email'}), 200
-            else:
-                app.logger.error(f"SendGrid error: {response.status_code}")
-                return jsonify({'message': 'Failed to send OTP email'}), 500
-                
-        except Exception as email_error:
-            app.logger.error(f"Error sending email: {str(email_error)}")
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        from_email = Email(SENDGRID_FROM_EMAIL)
+        to_email = To(email)
+        subject = "Password Reset OTP"
+        
+        # Create HTML content for the email
+        html_content = f"""
+        <html>
+            <body>
+                <h2>Password Reset Request</h2>
+                <p>You are receiving this because you (or someone else) have requested to reset the password for your account.</p>
+                <p>Your OTP is: <strong>{otp}</strong></p>
+                <p>This OTP will expire in 5 minutes.</p>
+                <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+                <br>
+                <p>Best regards,<br>Your App Team</p>
+            </body>
+        </html>
+        """
+        
+        # Create plain text content for the email
+        text_content = f"""
+        You are receiving this because you (or someone else) have requested to reset the password for your account.
+        
+        Your OTP is: {otp}
+        
+        This OTP will expire in 5 minutes.
+        
+        If you did not request this, please ignore this email and your password will remain unchanged.
+        """
+        
+        # Create the email message
+        message = Mail(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=subject,
+            html_content=Content("text/html", html_content),
+            plain_text_content=Content("text/plain", text_content)
+        )
+        
+        # Send the email
+        response = sg.send(message)
+        
+        if response.status_code == 202:
+            return jsonify({'message': 'OTP sent to your email'}), 200
+        else:
+            app.logger.error(f"SendGrid error: {response.status_code}")
             return jsonify({'message': 'Failed to send OTP email'}), 500
         
     except Exception as e:

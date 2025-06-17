@@ -1,23 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-} from 'react-native';
-import { Text, TextInput, Button, Surface } from 'react-native-paper';
-import api from '../../services/api';
-
-const { width } = Dimensions.get('window');
-
-const NETFLIX_BG = '#141414';
-const NETFLIX_CARD = '#232323';
-const NETFLIX_RED = '#E50914';
-const NETFLIX_GRAY = '#b3b3b3';
+import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../../services/api';
+import axios, { AxiosError } from 'axios';
 
 const OTPVerificationScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState('');
@@ -51,18 +36,41 @@ const OTPVerificationScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (otp.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit OTP');
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await api.post('/auth/verify-otp', {
-        email,
-        otp
-      });
       
-      if (response.data.verified) {
+      // Get stored OTP data
+      const storedOTPData = await AsyncStorage.getItem('resetPasswordOTP');
+      if (!storedOTPData) {
+        Alert.alert('Error', 'OTP has expired. Please request a new one.');
+        return;
+      }
+
+      const { otp: storedOTP, expiresAt } = JSON.parse(storedOTPData);
+      
+      // Check if OTP has expired
+      if (Date.now() > expiresAt) {
+        await AsyncStorage.removeItem('resetPasswordOTP');
+        Alert.alert('Error', 'OTP has expired. Please request a new one.');
+        return;
+      }
+
+      // Verify OTP
+      if (otp === storedOTP) {
+        // Clear the OTP from storage
+        await AsyncStorage.removeItem('resetPasswordOTP');
         navigation.navigate('ResetPassword', { email });
+      } else {
+        Alert.alert('Error', 'Invalid OTP. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Invalid OTP');
+      console.error('OTP verification error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -71,88 +79,65 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const handleResendOTP = async () => {
     try {
       setLoading(true);
-      await api.post('/auth/forgot-password', { email });
+      const response = await authService.forgotPassword(email);
+      
+      // Store new OTP in AsyncStorage with expiration
+      const otpData = {
+        otp: response.otp,
+        expiresAt: Date.now() + 300000 // 5 minutes from now
+      };
+      await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
+      
+      // Set up auto-deletion after 5 minutes
+      setTimeout(async () => {
+        await AsyncStorage.removeItem('resetPasswordOTP');
+      }, 300000);
+
       setTimer(300); // Reset timer
       Alert.alert('Success', 'New OTP has been sent to your email');
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to resend OTP');
+      console.error('Resend OTP error:', error);
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: NETFLIX_BG }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.container}>
-          <Surface style={styles.card} elevation={1}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.title}>Verify OTP</Text>
-            <Text style={styles.subtitle}>
-              Enter the 6-digit code sent to your email
-            </Text>
-            
-            <TextInput
-              style={styles.input}
-              mode="flat"
-              label="Enter OTP"
-              value={otp}
-              textColor='#fff'
-              onChangeText={setOtp}
-              keyboardType="number-pad"
-              maxLength={6}
-              theme={{
-                roundness: 16,
-                colors: {
-                  primary: NETFLIX_RED,
-                  text: '#fff',
-                  placeholder: NETFLIX_GRAY,
-                  background: NETFLIX_CARD,
-                },
-              }}
-              underlineColor={NETFLIX_RED}
-              selectionColor={NETFLIX_RED}
-              editable={!loading}
-            />
+    <View style={styles.container}>
+      <Text style={styles.title}>Verify OTP</Text>
+      <Text style={styles.subtitle}>
+        Enter the 6-digit code sent to your email
+      </Text>
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Enter OTP"
+        value={otp}
+        onChangeText={setOtp}
+        keyboardType="number-pad"
+        maxLength={6}
+        editable={!loading}
+      />
 
-            <Text style={styles.timer}>
-              Time remaining: {formatTime(timer)}
-            </Text>
+      <Text style={styles.timer}>
+        Time remaining: {formatTime(timer)}
+      </Text>
 
-            <Button
-              mode="contained"
-              style={styles.verifyButton}
-              contentStyle={{ paddingVertical: 12 }}
-              labelStyle={styles.buttonLabel}
-              onPress={handleVerifyOTP}
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator color="#fff" /> : 'Verify OTP'}
-            </Button>
+      <Button 
+        title={loading ? "Verifying..." : "Verify OTP"} 
+        onPress={handleVerifyOTP}
+        disabled={loading}
+      />
 
-            {timer === 0 && (
-              <Button
-                mode="text"
-                style={styles.resendButton}
-                labelStyle={styles.resendButtonLabel}
-                onPress={handleResendOTP}
-                disabled={loading}
-              >
-                Resend OTP
-              </Button>
-            )}
-          </Surface>
-        </View>
-      </KeyboardAvoidingView>
+      {timer === 0 && (
+        <Button 
+          title={loading ? "Sending..." : "Resend OTP"} 
+          onPress={handleResendOTP}
+          disabled={loading}
+          color="#666"
+        />
+      )}
     </View>
   );
 };
@@ -162,90 +147,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    backgroundColor: NETFLIX_CARD,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  logoContainer: {
-    marginBottom: 18,
-    backgroundColor: NETFLIX_CARD,
-    borderRadius: 100,
-    padding: 12,
-    elevation: 0,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  logo: {
-    width: width * 0.18,
-    height: width * 0.18,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-    textAlign: 'center',
-    letterSpacing: 1,
+    marginBottom: 10,
+    color: '#333',
   },
   subtitle: {
     fontSize: 16,
-    color: NETFLIX_GRAY,
-    marginBottom: 24,
+    color: '#666',
+    marginBottom: 20,
     textAlign: 'center',
-    fontWeight: '600',
   },
   input: {
     width: '100%',
-    marginBottom: 18,
-    backgroundColor: NETFLIX_CARD,
-    color: '#fff',
-    fontSize: 24,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+    fontSize: 18,
     textAlign: 'center',
     letterSpacing: 8,
   },
   timer: {
     marginBottom: 20,
-    color: NETFLIX_GRAY,
-    fontSize: 16,
-  },
-  verifyButton: {
-    width: '100%',
-    borderRadius: 32,
-    marginTop: 8,
-    marginBottom: 8,
-    backgroundColor: NETFLIX_RED,
-    elevation: 0,
-    alignSelf: 'center',
-  },
-  buttonLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  resendButton: {
-    marginTop: 8,
-  },
-  resendButtonLabel: {
-    color: NETFLIX_GRAY,
-    fontSize: 16,
-    textDecorationLine: 'underline',
+    color: '#666',
   },
 });
 
