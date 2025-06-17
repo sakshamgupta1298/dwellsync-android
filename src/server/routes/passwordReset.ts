@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { UserModel } from '../models/User';
 import crypto from 'crypto';
 import sgMail from '@sendgrid/mail';
@@ -19,7 +19,7 @@ const generateOTP = () => {
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset (sends email with OTP)
 // @access  Public
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     const user = await UserModel.findOne({ email });
@@ -49,7 +49,7 @@ router.post('/forgot-password', async (req, res) => {
 
     await sgMail.send(msg);
 
-    res.status(200).json({ message: 'OTP sent to your email' });
+    res.status(200).json({ message: 'OTP sent to your email', otp: otp });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -59,7 +59,7 @@ router.post('/forgot-password', async (req, res) => {
 // @route   POST /api/auth/verify-otp
 // @desc    Verify OTP for password reset
 // @access  Public
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', async (req: Request, res: Response) => {
   try {
     const { email, otp } = req.body;
     console.log('Verifying OTP:', { email, otp });
@@ -73,8 +73,6 @@ router.post('/verify-otp', async (req, res) => {
 
     if (!user) {
       console.log('OTP verification failed. User not found or OTP expired.');
-      console.log('Stored OTP:', user?.resetPasswordOTP);
-      console.log('Expiration time:', user?.resetPasswordExpires);
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
@@ -90,7 +88,7 @@ router.post('/verify-otp', async (req, res) => {
 // @route   POST /api/auth/reset-password
 // @desc    Reset password after OTP verification
 // @access  Public
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', async (req: Request, res: Response) => {
   try {
     const { email, newPassword } = req.body;
 
