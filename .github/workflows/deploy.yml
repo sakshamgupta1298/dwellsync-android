@@ -20,9 +20,25 @@ jobs:
     - name: Deploy to server
       run: |
         ssh -o StrictHostKeyChecking=no root@liveinsync.in << 'EOF'
-          cd /root/dwellsync-android/rent-manager
-          git pull origin main
-          source venv/bin/activate
-          pip install -r requirements.txt
-          sudo systemctl restart flaskapp
+          # Navigate to your application directory
+          cd /dwellsync-android
+
+          # Pull the latest code
+          git pull --rebase origin main
+
+          # Install Node.js dependencies
+          npm install
+
+          # Build the TypeScript backend
+          npm run build
+
+          # Install PM2 globally if not already installed
+          npm install -g pm2
+
+          # Start or restart the application with PM2
+          # Using --name to give it a memorable process name in PM2
+          pm2 startOrRestart dist/index.js --name dwellsync-backend
+
+          # Save PM2 process list across reboots (optional, but recommended)
+          pm2 save
         EOF
