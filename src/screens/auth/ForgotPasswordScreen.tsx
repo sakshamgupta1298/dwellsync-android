@@ -31,33 +31,13 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      console.log('Sending request to:', `${api.defaults.baseURL}/auth/forgot-password`);
-      console.log('Request payload:', { email });
-      
       const response = await api.post('/auth/forgot-password', { email });
-      console.log('Response:', response.data);
-      
       setLoading(false);
       navigation.navigate('OTPVerification', { email });
     } catch (error) {
       setLoading(false);
-      console.error('Forgot password error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-      });
-      
-      let errorMessage = 'Something went wrong';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message === 'Network Error') {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-      } else if (error.code === 'ECONNABORTED') {
-        errorMessage = 'Request timed out. Please try again.';
-      }
-      
-      Alert.alert('Error', errorMessage);
+      console.error(error);
+      Alert.alert('Error', error.response?.data?.message || 'Something went wrong');
     }
   };
 
