@@ -71,17 +71,20 @@ export const authService = {
     }
   },
 
-  forgotPassword: async (email: string) => {
+  forgotPassword: async (email: string): Promise<{ message: string; otp?: string }> => {
     try {
       console.log('Sending forgot password request for email:', email);
       const response = await api.post('/auth/forgot-password', { email });
       console.log('Server response:', response.data);
       
+      // Ensure the response data is typed correctly
+      const responseData = response.data as { message: string; otp?: string };
+      
       // For development/testing, we'll return the OTP in the response
       // In production, this should be removed and OTP should only be sent via email
       const result = {
-        ...response.data,
-        otp: response.data.otp // This should be removed in production
+        ...responseData,
+        otp: responseData.otp // Ensure we're reading from the typed responseData
       };
       console.log('Returning to client:', result);
       return result;
@@ -127,18 +130,18 @@ export const tenantService = {
       const formData = new FormData();
       formData.append('reading_value', readingValue.toString());
       formData.append('meter_type', meterType);
-      formData.append('image', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'meter_reading.jpg',
-      });
 
-      const response = await api.post('/submit_reading', formData, {
+      // Fetch the image from the URI and append as a Blob
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('image', blob, 'meter_reading.jpg');
+
+      const apiResponse = await api.post('/submit_reading', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return response.data;
+      return apiResponse.data;
     } catch (error) {
       throw error;
     }
