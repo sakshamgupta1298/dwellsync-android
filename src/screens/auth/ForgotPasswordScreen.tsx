@@ -1,11 +1,36 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import { authService } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView } from 'react-native';
+import { authService, setDebugLogCallback, getDebugLogs } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  request?: any;
+}
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Set up the debug log callback
+    setDebugLogCallback((logs) => {
+      setDebugLogs(logs);
+    });
+
+    // Initial load of existing logs
+    setDebugLogs(getDebugLogs());
+
+    // Cleanup
+    return () => {
+      setDebugLogCallback(() => {});
+    };
+  }, []);
 
   const handleSubmit = async () => {
     if (!email) {
@@ -23,19 +48,20 @@ const ForgotPasswordScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await authService.forgotPassword(email);
-      console.log('Forgot password response:', response);
       
       // Store OTP in AsyncStorage with expiration
       const otpData = {
-        otp: response.otp, // Assuming the API returns the OTP
+        otp: response.otp,
         expiresAt: Date.now() + 300000 // 5 minutes from now
       };
-      console.log('Storing OTP data:', otpData);
+      
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
       
       // Verify the stored data
       const storedData = await AsyncStorage.getItem('resetPasswordOTP');
-      console.log('Verified stored OTP data:', JSON.parse(storedData));
+      if (storedData) {
+        console.log('Verified stored OTP data:', JSON.parse(storedData));
+      }
       
       // Set up auto-deletion after 5 minutes
       setTimeout(async () => {
@@ -44,11 +70,11 @@ const ForgotPasswordScreen = ({ navigation }) => {
       }, 300000);
 
       navigation.navigate('OTPVerification', { email });
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      if (error.response) {
-        Alert.alert('Error', error.response.data?.message || 'Failed to send verification code');
-      } else if (error.request) {
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.response) {
+        Alert.alert('Error', apiError.response.data?.message || 'Failed to send verification code');
+      } else if (apiError.request) {
         Alert.alert('Error', 'No response from server. Please check your internet connection');
       } else {
         Alert.alert('Error', 'Something went wrong. Please try again later');
@@ -80,6 +106,16 @@ const ForgotPasswordScreen = ({ navigation }) => {
         onPress={handleSubmit}
         disabled={loading}
       />
+
+      {/* Debug View */}
+      <View style={styles.debugContainer}>
+        <Text style={styles.debugTitle}>Debug Logs:</Text>
+        <ScrollView style={styles.debugLogs}>
+          {debugLogs.map((log, index) => (
+            <Text key={index} style={styles.debugLog}>{log}</Text>
+          ))}
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -97,6 +133,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#333',
+  },
+  debugContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 10,
+    maxHeight: 200,
+  },
+  debugTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  debugLogs: {
+    maxHeight: 150,
+  },
+  debugLog: {
+    color: '#fff',
+    fontSize: 12,
+    marginBottom: 2,
   },
   subtitle: {
     fontSize: 16,
