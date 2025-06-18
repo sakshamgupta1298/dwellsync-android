@@ -71,10 +71,13 @@ export const authService = {
     }
   },
 
-  forgotPassword: async (email: string) => {
+  forgotPassword: async (email: string, isOwner: boolean = true) => {
     try {
-      console.log('Sending forgot password request for email:', email);
-      const response = await api.post('/auth/forgot-password', { email });
+      console.log('Sending forgot password request for email:', email, 'isOwner:', isOwner);
+      const response = await api.post('/auth/forgot-password', { 
+        email,
+        is_owner: isOwner 
+      });
       console.log('Server response:', response.data);
       
       // Ensure we have the OTP in the response

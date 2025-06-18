@@ -111,7 +111,7 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
             <Button
               mode="text"
               labelStyle={styles.forgotPasswordLink}
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() => navigation.navigate('ForgotPassword', { isOwner: showRegister })}
               style={styles.forgotPasswordButton}
             >
               Forgot Password?

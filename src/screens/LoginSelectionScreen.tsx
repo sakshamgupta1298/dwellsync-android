@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     letterSpacing: 1,
-    fontFamily: Platform.OS === 'ios' ? 'ChalkboardSE-Bold' : 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'GeezaPro-Bold' : 'sans-serif-medium',
   },
   tenantButtonLabel: {
     fontSize: Math.max(14, width * 0.045),
