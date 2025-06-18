@@ -19,8 +19,6 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     is_owner = db.Column(db.Boolean, default=False)
     rent_amount = db.Column(db.Float, nullable=False, default=0.0)
-    deposit = db.Column(db.Float, nullable=True)  # New field for security deposit
-    property_photo = db.Column(db.String(255), nullable=True)  # New field for property photo path
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # For tenants, this links to their owner
     meter_readings = db.relationship('MeterReading', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)

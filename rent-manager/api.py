@@ -581,10 +581,8 @@ def register_tenant(current_user):
     data = request.get_json()
     name = data.get('name')
     rent_amount = float(data.get('rent_amount'))
-    deposit = float(data.get('deposit', 0))  # New field with default 0
     initial_electricity_reading = float(data.get('initial_electricity_reading'))
     initial_water_reading = float(data.get('initial_water_reading'))
-    property_photo = data.get('property_photo')  # New field
     
     if not all([name, rent_amount, initial_electricity_reading, initial_water_reading]):
         return jsonify({'error': 'Missing required fields'}), 400
@@ -599,8 +597,6 @@ def register_tenant(current_user):
         tenant_id=tenant_id,
         name=name,
         rent_amount=rent_amount,
-        deposit=deposit,  # Add deposit
-        property_photo=property_photo,  # Add property photo
         is_owner=False,
         owner_id=current_user.id  # Set the owner_id to the current owner's ID
     )
@@ -640,9 +636,7 @@ def register_tenant(current_user):
             'id': tenant.id,
             'name': tenant.name,
             'tenant_id': tenant.tenant_id,
-            'password': password,  # Send the generated password
-            'deposit': tenant.deposit,  # Include deposit in response
-            'property_photo': tenant.property_photo  # Include property photo in response
+            'password': password  # Send the generated password
         }
     })
 

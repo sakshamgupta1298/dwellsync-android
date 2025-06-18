@@ -73,12 +73,12 @@ export const authService = {
 
   forgotPassword: async (email: string, isOwner: boolean = true) => {
     try {
-      // console.log('Sending forgot password request for email:', email, 'isOwner:', isOwner);
+      console.log('Sending forgot password request for email:', email, 'isOwner:', isOwner);
       const response = await api.post('/auth/forgot-password', { 
         email,
         is_owner: isOwner 
       });
-      // console.log('Server response:', response.data);
+      console.log('Server response:', response.data);
       
       // Ensure we have the OTP in the response
       if (!response.data.otp) {
@@ -90,25 +90,25 @@ export const authService = {
         otp: response.data.otp
       };
     } catch (error) {
-      // console.error('Forgot password API error:', error);
+      console.error('Forgot password API error:', error);
       throw error;
     }
   },
 
   verifyOTP: async (email: string, otp: string) => {
     try {
-      // console.log('Making OTP verification request:', { email, otp });
+      console.log('Making OTP verification request:', { email, otp });
       const response = await api.post('/auth/verify-otp', { email, otp });
-      // console.log('OTP verification API response:', response.data);
+      console.log('OTP verification API response:', response.data);
       return response.data;
     } catch (error) {
-      // console.error('OTP verification API error:', error);
+      console.error('OTP verification API error:', error);
       if (axios.isAxiosError(error)) {
-        // console.error('API Error details:', {
-        //   status: error.response?.status,
-        //   data: error.response?.data,
-        //   message: error.message
-        // });
+        console.error('API Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
       }
       throw error;
     }
@@ -202,31 +202,15 @@ export const ownerService = {
   registerTenant: async (
     name: string,
     rentAmount: number,
-    deposit: number,
     initialElectricity: number,
-    initialWater: number,
-    propertyPhoto: string
+    initialWater: number
   ) => {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('rent_amount', rentAmount.toString());
-      formData.append('deposit', deposit.toString());
-      formData.append('initial_electricity_reading', initialElectricity.toString());
-      formData.append('initial_water_reading', initialWater.toString());
-      
-      if (propertyPhoto) {
-        formData.append('property_photo', {
-          uri: propertyPhoto,
-          type: 'image/jpeg',
-          name: 'property_photo.jpg',
-        } as any);
-      }
-
-      const response = await api.post('/register_tenant', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await api.post('/register_tenant', {
+        name,
+        rent_amount: rentAmount,
+        initial_electricity_reading: initialElectricity,
+        initial_water_reading: initialWater,
       });
       return response.data;
     } catch (error) {
