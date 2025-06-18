@@ -3,6 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Al
 import { Text, TextInput, Button, Surface, Card } from 'react-native-paper';
 import { ownerService } from '../../services/api'; // Make sure this import exists
 import { useAuth } from '../../utils/AuthContext';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
@@ -18,21 +19,50 @@ const OwnerOverviewSection = () => {
   // State for tenant registration
   const [tenantName, setTenantName] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
+  const [deposit, setDeposit] = useState('');
   const [initialElectricity, setInitialElectricity] = useState('');
   const [initialWater, setInitialWater] = useState('');
+  const [propertyPhoto, setPropertyPhoto] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Placeholder handlers
   // const handleUpdateRate = () => {
   //   Alert.alert('Update Rate', `Set rate per unit: ₹${rate}`);
   // };
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please grant permission to access your photo library');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setPropertyPhoto(result.assets[0].uri);
+    }
+  };
+
   const handleRegisterTenant = async () => {
+    if (!tenantName || !monthlyRent || !deposit || !initialElectricity || !initialWater) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
     try {
       const response = await ownerService.registerTenant(
         tenantName,
         Number(monthlyRent),
+        Number(deposit),
         Number(initialElectricity),
-        Number(initialWater)
+        Number(initialWater),
+        propertyPhoto || ''
       );
       console.log('Register Tenant Response:', response);
       if (response && response.tenant && response.tenant.tenant_id && response.tenant.password) {
@@ -40,12 +70,14 @@ const OwnerOverviewSection = () => {
           'Tenant Registered',
           `Tenant ID: ${response.tenant.tenant_id}\nPassword: ${response.tenant.password}`
         );
+        // Clear form
         setTenantName('');
         setMonthlyRent('');
+        setDeposit('');
         setInitialElectricity('');
         setInitialWater('');
+        setPropertyPhoto(null);
       } else {
-        // Try to show the full response for debugging
         Alert.alert('Error', 'No tenant info returned from backend.\n' + JSON.stringify(response));
       }
     } catch (e: any) {
@@ -69,8 +101,10 @@ const OwnerOverviewSection = () => {
       setRate('');
       setTenantName('');
       setMonthlyRent('');
+      setDeposit('');
       setInitialElectricity('');
       setInitialWater('');
+      setPropertyPhoto(null);
       setRefreshing(false);
     }, 1000);
   };
@@ -139,6 +173,26 @@ const OwnerOverviewSection = () => {
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
                   mode="flat"
+                  label="Security Deposit (₹)"
+                  value={deposit}
+                  textColor='#fff'
+                  onChangeText={setDeposit}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
                   label="Initial Electricity Meter Reading"
                   value={initialElectricity}
                   textColor='#fff'
@@ -176,7 +230,29 @@ const OwnerOverviewSection = () => {
                   underlineColor={NETFLIX_RED}
                   selectionColor={NETFLIX_RED}
                 />
-                <Button mode="contained" style={styles.actionButton} labelStyle={styles.actionButtonLabel} onPress={handleRegisterTenant}>
+                <Button 
+                  mode="outlined" 
+                  onPress={pickImage}
+                  style={styles.imageButton}
+                  textColor={NETFLIX_RED}
+                >
+                  {propertyPhoto ? 'Change Property Photo' : 'Add Property Photo'}
+                </Button>
+
+                {propertyPhoto && (
+                  <Image 
+                    source={{ uri: propertyPhoto }} 
+                    style={styles.propertyImage}
+                    resizeMode="cover"
+                  />
+                )}
+
+                <Button 
+                  mode="contained" 
+                  style={styles.actionButton} 
+                  labelStyle={styles.actionButtonLabel} 
+                  onPress={handleRegisterTenant}
+                >
                   Register Tenant
                 </Button>
               </Card.Content>
@@ -302,6 +378,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+  imageButton: {
+    marginTop: 8,
+    borderColor: NETFLIX_RED,
+  },
+  propertyImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 8,
   },
 });
 

@@ -136,9 +136,17 @@ const DashboardScreen = ({ navigation }: any) => {
         }>
         <View style={styles.headerRow}>
           <Text style={styles.welcomeText}>Hi, {user?.name}</Text>
-          <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.changePasswordButton}
+              onPress={() => navigation.navigate('TenantProfile')}
+            >
+              <Text style={styles.changePasswordText}>Change Password</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         {/* Billing Card */}
         <Surface style={styles.card}>
@@ -226,6 +234,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     letterSpacing: 1,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  changePasswordButton: {
+    backgroundColor: NETFLIX_CARD,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: NETFLIX_GRAY,
+  },
+  changePasswordText: {
+    color: NETFLIX_GRAY,
+    fontSize: 14,
+    fontWeight: '500',
   },
   logoutButton: {
     padding: 8,
