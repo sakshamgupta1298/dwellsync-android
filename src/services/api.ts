@@ -1,26 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Debug logging system
-let debugLogs: string[] = [];
-let debugLogCallback: ((logs: string[]) => void) | null = null;
-
-export const setDebugLogCallback = (callback: (logs: string[]) => void) => {
-  debugLogCallback = callback;
-};
-
-const addDebugLog = (message: string) => {
-  const timestamp = new Date().toLocaleTimeString();
-  const logMessage = `${timestamp}: ${message}`;
-  console.log(logMessage);
-  debugLogs = [...debugLogs, logMessage];
-  if (debugLogCallback) {
-    debugLogCallback(debugLogs);
-  }
-};
-
-export const getDebugLogs = () => debugLogs;
-
 export const API_BASE_URL = 'http://liveinsync.in:5000/api'; // Replace with your actual backend URL
 // const API_URL = 'http://10.0.2.2:8081/api';
 // Create axios instance
@@ -49,91 +29,83 @@ api.interceptors.request.use(
 export const authService = {
   login: async (tenantId: string, password: string) => {
     try {
-      addDebugLog(`Attempting login for tenant ID: ${tenantId}`);
       const response = await api.post('/login', { tenant_id: tenantId, password });
-      addDebugLog(`Login response received: ${JSON.stringify(response.data)}`);
-      
+      console.log("response:",response)
       if (response.data.token) {
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        // Debug log to confirm token is saved
         const savedToken = await AsyncStorage.getItem('token');
-        addDebugLog(`Token saved in AsyncStorage: ${savedToken ? 'Success' : 'Failed'}`);
+        console.log('Token saved in AsyncStorage:', savedToken);
       }
       return response.data;
     } catch (error) {
-      addDebugLog(`Login error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   },
 
   registerOwner: async (name: string, email: string, password: string) => {
     try {
-      addDebugLog(`Attempting owner registration for email: ${email}`);
       const response = await api.post('/register_owner', { name, email, password });
-      addDebugLog(`Owner registration response: ${JSON.stringify(response.data)}`);
       return response.data;
     } catch (error) {
-      addDebugLog(`Owner registration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   },
 
   registerTenant: async (name: string, rentAmount: number) => {
     try {
-      addDebugLog(`Attempting tenant registration for name: ${name}`);
       const response = await api.post('/register_tenant', { name, rent_amount: rentAmount });
-      addDebugLog(`Tenant registration response: ${JSON.stringify(response.data)}`);
       return response.data;
     } catch (error) {
-      addDebugLog(`Tenant registration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   },
 
   logout: async () => {
     try {
-      addDebugLog('Attempting logout');
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
-      addDebugLog('Logout successful');
     } catch (error) {
-      addDebugLog(`Logout error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   },
 
   forgotPassword: async (email: string) => {
     try {
-      addDebugLog(`Sending forgot password request for email: ${email}`);
+      console.log('Sending forgot password request for email:', email);
       const response = await api.post('/auth/forgot-password', { email });
-      addDebugLog(`Forgot password response: ${JSON.stringify(response.data)}`);
+      console.log('Server response:', response.data);
       
-      const result = {
-        ...response.data,
+      // Ensure we have the OTP in the response
+      if (!response.data.otp) {
+        throw new Error('OTP not received from server');
+      }
+
+      return {
+        message: response.data.message || 'OTP sent successfully',
         otp: response.data.otp
       };
-      addDebugLog(`OTP returned by API: ${result.otp}`);
-      return result;
     } catch (error) {
-      addDebugLog(`Forgot password error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Forgot password API error:', error);
       throw error;
     }
   },
 
   verifyOTP: async (email: string, otp: string) => {
     try {
-      addDebugLog(`Making OTP verification request for email: ${email}`);
+      console.log('Making OTP verification request:', { email, otp });
       const response = await api.post('/auth/verify-otp', { email, otp });
-      addDebugLog(`OTP verification response: ${JSON.stringify(response.data)}`);
+      console.log('OTP verification API response:', response.data);
       return response.data;
     } catch (error) {
-      addDebugLog(`OTP verification error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('OTP verification API error:', error);
       if (axios.isAxiosError(error)) {
-        addDebugLog(`API Error details: ${JSON.stringify({
+        console.error('API Error details:', {
           status: error.response?.status,
           data: error.response?.data,
           message: error.message
-        })}`);
+        });
       }
       throw error;
     }

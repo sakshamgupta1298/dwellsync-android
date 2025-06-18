@@ -946,7 +946,11 @@ def forgot_password():
         response = sg.send(message)
         
         if response.status_code == 202:
-            return jsonify({'message': 'OTP sent to your email'}), 200
+            # Return both message and OTP in the response
+            return jsonify({
+                'message': 'OTP sent to your email',
+                'otp': otp  # Include OTP in response
+            }), 200
         else:
             app.logger.error(f"SendGrid error: {response.status_code}")
             return jsonify({'message': 'Failed to send OTP email'}), 500

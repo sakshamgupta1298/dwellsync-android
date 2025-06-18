@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView } from 'react-native';
-import { authService, setDebugLogCallback, getDebugLogs } from '../../services/api';
+import { authService } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ApiError {
@@ -17,20 +17,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Set up the debug log callback
-    setDebugLogCallback((logs) => {
-      setDebugLogs(logs);
-    });
-
-    // Initial load of existing logs
-    setDebugLogs(getDebugLogs());
-
-    // Cleanup
-    return () => {
-      setDebugLogCallback(() => {});
-    };
-  }, []);
+  const addLog = (message: string) => {
+    console.log(message);
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
 
   const handleSubmit = async () => {
     if (!email) {
@@ -48,13 +38,22 @@ const ForgotPasswordScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await authService.forgotPassword(email);
+      console.log('Forgot password response:', response);
+      addLog(`Forgot password response: ${JSON.stringify(response)}`);
+      
+      if (!response.otp) {
+        throw new Error('OTP not received from server');
+      }
+
+      addLog(`OTP received from API: ${response.otp}`);
       
       // Store OTP in AsyncStorage with expiration
       const otpData = {
         otp: response.otp,
         expiresAt: Date.now() + 300000 // 5 minutes from now
       };
-      
+      console.log('Storing OTP data:', otpData);
+      addLog(`Storing OTP data: ${JSON.stringify(otpData)}`);
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
       
       // Verify the stored data
@@ -71,6 +70,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
       navigation.navigate('OTPVerification', { email });
     } catch (error: unknown) {
+      console.error('Forgot password error:', error);
       const apiError = error as ApiError;
       if (apiError.response) {
         Alert.alert('Error', apiError.response.data?.message || 'Failed to send verification code');
