@@ -113,6 +113,19 @@ export const authService = {
       throw error;
     }
   },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    try {
+      const response = await api.post('/change_password', {
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Change password API error:', error);
+      throw error;
+    }
+  },
 };
 
 // Tenant Services

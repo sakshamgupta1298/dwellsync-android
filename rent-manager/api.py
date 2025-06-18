@@ -643,25 +643,42 @@ def register_tenant(current_user):
 @app.route('/api/change_password', methods=['POST'])
 @token_required
 def change_password(current_user):
-    if not request.is_json:
-        return jsonify({'error': 'Missing JSON in request'}), 400
-    
-    data = request.get_json()
-    current_password = data.get('current_password')
-    new_password = data.get('new_password')
-    
-    if not all([current_password, new_password]):
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    # Verify current password
-    if not current_user.check_password(current_password):
-        return jsonify({'error': 'Current password is incorrect'}), 401
-    
-    # Update password
-    current_user.set_password(new_password)
-    db.session.commit()
-    
-    return jsonify({'message': 'Password updated successfully'})
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Missing JSON in request'}), 400
+        
+        data = request.get_json()
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not all([current_password, new_password]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Verify current password
+        if not current_user.check_password(current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+        
+        # Validate new password length
+        if len(new_password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters long'}), 400
+        
+        # Update password
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Password updated successfully',
+            'user': {
+                'id': current_user.id,
+                'name': current_user.name,
+                'is_owner': current_user.is_owner,
+                'tenant_id': current_user.tenant_id if not current_user.is_owner else None
+            }
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error in change_password: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/register_owner', methods=['POST'])
 def register_owner():
