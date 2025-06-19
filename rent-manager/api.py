@@ -583,6 +583,7 @@ def register_tenant(current_user):
     rent_amount = float(data.get('rent_amount'))
     initial_electricity_reading = float(data.get('initial_electricity_reading'))
     initial_water_reading = float(data.get('initial_water_reading'))
+    deposit = float(data.get('deposit', 0.0))  # Default to 0.0 if not provided
     
     if not all([name, rent_amount, initial_electricity_reading, initial_water_reading]):
         return jsonify({'error': 'Missing required fields'}), 400
@@ -597,6 +598,7 @@ def register_tenant(current_user):
         tenant_id=tenant_id,
         name=name,
         rent_amount=rent_amount,
+        deposit=deposit,
         is_owner=False,
         owner_id=current_user.id  # Set the owner_id to the current owner's ID
     )
@@ -636,7 +638,8 @@ def register_tenant(current_user):
             'id': tenant.id,
             'name': tenant.name,
             'tenant_id': tenant.tenant_id,
-            'password': password  # Send the generated password
+            'password': password,  # Send the generated password
+            'deposit': tenant.deposit
         }
     })
 

@@ -30,6 +30,10 @@ import { MaintenanceRequestsScreen } from '../screens/owner/MaintenanceRequestsS
 import LandingScreen from '../screens/LandingScreen';
 import LoginSelectionScreen from '../screens/LoginSelectionScreen';
 
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import AboutUsScreen from '../screens/AboutUsScreen';
+
 // Define navigation param types
 type RootStackParamList = {
   Landing: undefined;
@@ -57,6 +61,9 @@ type RootStackParamList = {
     propertyId: string;
     tenantId: string;
   };
+  PrivacyPolicy: undefined;
+  TermsAndConditions: undefined;
+  AboutUs: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -91,6 +98,9 @@ const AppNavigator = () => {
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ headerShown: false, title: 'Privacy Policy' }} />
+            <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} options={{ headerShown: false, title: 'Terms and Conditions' }} />
+            <Stack.Screen name="AboutUs" component={AboutUsScreen} options={{ headerShown: false, title: 'About Us' }} />
           </>
         ) : user.is_owner ? (
           // Owner Stack
@@ -123,7 +133,7 @@ const AppNavigator = () => {
               name="MaintenanceRequest" 
               component={MaintenanceRequestScreen} 
               options={{ 
-                headerShown: true,
+                headerShown: false,
                 title: 'Submit Maintenance Request',
                 headerStyle: {
                   backgroundColor: '#fff',
@@ -135,7 +145,7 @@ const AppNavigator = () => {
               name="MaintenanceHistory" 
               component={MaintenanceHistoryScreen} 
               options={{ 
-                headerShown: true,
+                headerShown: false,
                 title: 'Maintenance History',
                 headerStyle: {
                   backgroundColor: '#fff',

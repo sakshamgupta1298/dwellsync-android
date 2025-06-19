@@ -13,13 +13,7 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(300); // 5 minutes in seconds
   const [loading, setLoading] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const { email, isOwner = true } = route.params;
-
-  const addLog = (message: string) => {
-    console.log(message);
-    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,38 +51,30 @@ const OTPVerificationScreen = ({ navigation, route }) => {
       
       // Get stored OTP data
       const storedOTPData = await AsyncStorage.getItem('resetPasswordOTP');
-      addLog('Retrieved stored OTP data: ' + storedOTPData);
       
       if (!storedOTPData) {
-        addLog('No OTP data found in storage');
         Alert.alert('Error', 'OTP has expired. Please request a new one.');
         return;
       }
 
       const { otp: storedOTP, expiresAt } = JSON.parse(storedOTPData);
-      addLog(`Parsed OTP data: storedOTP=${storedOTP}, expiresAt=${new Date(expiresAt).toLocaleString()}, currentTime=${new Date().toLocaleString()}`);
       
       // Check if OTP has expired
       if (Date.now() > expiresAt) {
-        addLog('OTP has expired');
         await AsyncStorage.removeItem('resetPasswordOTP');
         Alert.alert('Error', 'OTP has expired. Please request a new one.');
         return;
       }
 
       // Verify OTP
-      addLog(`Comparing OTPs: enteredOTP=${otp}, storedOTP=${storedOTP}`);
       if (otp === storedOTP) {
-        addLog('OTP verification successful');
         // Clear the OTP from storage
         await AsyncStorage.removeItem('resetPasswordOTP');
         navigation.navigate('ResetPassword', { email });
       } else {
-        addLog('OTP verification failed - OTPs do not match');
         Alert.alert('Error', 'Invalid OTP. Please try again.');
       }
     } catch (error) {
-      addLog('OTP verification error: ' + JSON.stringify(error));
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -98,9 +84,7 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const handleResendOTP = async () => {
     try {
       setLoading(true);
-      addLog('Requesting new OTP for email: ' + email);
       const response = await authService.forgotPassword(email, isOwner);
-      addLog('New OTP response: ' + JSON.stringify(response));
       
       // Store new OTP in AsyncStorage with expiration
       const otpData = {
@@ -108,19 +92,16 @@ const OTPVerificationScreen = ({ navigation, route }) => {
         expiresAt: Date.now() + 300000, // 5 minutes from now
         isOwner: isOwner // Store whether this is for owner or tenant
       };
-      addLog('Storing new OTP data: ' + JSON.stringify(otpData));
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
       
       // Set up auto-deletion after 5 minutes
       setTimeout(async () => {
         await AsyncStorage.removeItem('resetPasswordOTP');
-        addLog('OTP data auto-deleted after 5 minutes');
       }, 300000);
 
       setTimer(300); // Reset timer
       Alert.alert('Success', 'New OTP has been sent to your email');
     } catch (error) {
-      addLog('Resend OTP error: ' + JSON.stringify(error));
       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);
@@ -182,14 +163,14 @@ const OTPVerificationScreen = ({ navigation, route }) => {
         </View>
 
         {/* Debug View */}
-        <View style={styles.debugContainer}>
+        {/* <View style={styles.debugContainer}>
           <Text style={styles.debugTitle}>Debug Logs:</Text>
           <ScrollView style={styles.debugLogs}>
             {debugLogs.map((log, index) => (
               <Text key={index} style={styles.debugLog}>{log}</Text>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

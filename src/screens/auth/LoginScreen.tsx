@@ -70,12 +70,12 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
             <TextInput
               style={styles.input}
               mode="flat"
-              label="Tenant ID or Email"
+              label={showRegister ? "Tenant ID or Email" : "Tenant ID"}
               value={tenantId}
               textColor='#fff'
               onChangeText={setTenantId}
               autoCapitalize="none"
-              keyboardType="email-address"
+              keyboardType={showRegister ? "email-address" : "default"}
               theme={{
                 roundness: 16,
                 colors: {
@@ -139,6 +139,35 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
               </View>
             )}
           </Surface>
+          {/* Add legal/about links below the card */}
+          <View style={styles.legalLinksRow}>
+            <Button
+              mode="text"
+              labelStyle={styles.legalLink}
+              onPress={() => navigation.navigate('PrivacyPolicy')}
+              compact
+            >
+              Privacy Policy
+            </Button>
+            <Text style={styles.legalDivider}>|</Text>
+            <Button
+              mode="text"
+              labelStyle={styles.legalLink}
+              onPress={() => navigation.navigate('TermsAndConditions')}
+              compact
+            >
+              Terms & Conditions
+            </Button>
+            <Text style={styles.legalDivider}>|</Text>
+            <Button
+              mode="text"
+              labelStyle={styles.legalLink}
+              onPress={() => navigation.navigate('AboutUs')}
+              compact
+            >
+              About Us
+            </Button>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -243,6 +272,28 @@ const styles = StyleSheet.create({
     color: NETFLIX_GRAY,
     fontSize: 14,
     textDecorationLine: 'underline',
+  },
+  legalLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 0,
+  },
+  legalLink: {
+    color: NETFLIX_GRAY,
+    textDecorationLine: 'underline',
+    fontSize: 14,
+    marginHorizontal: 4,
+    paddingHorizontal: 0,
+    minWidth: 0,
+  },
+  legalDivider: {
+    color: NETFLIX_GRAY,
+    fontSize: 16,
+    marginHorizontal: 2,
+    opacity: 0.7,
+    fontWeight: 'bold',
   },
 });
 

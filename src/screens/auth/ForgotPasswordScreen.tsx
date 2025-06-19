@@ -21,13 +21,13 @@ interface ApiError {
 const ForgotPasswordScreen = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  // const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const isOwner = route.params?.isOwner ?? true; // Default to owner if not specified
 
-  const addLog = (message: string) => {
-    console.log(message);
-    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
+  // const addLog = (message: string) => {
+  //   console.log(message);
+  //   setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  // };
 
   const handleSubmit = async () => {
     if (!email) {
@@ -44,16 +44,16 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
 
     try {
       setLoading(true);
-      addLog(`Sending forgot password request for ${isOwner ? 'owner' : 'tenant'} email: ${email}`);
+      // addLog(`Sending forgot password request for ${isOwner ? 'owner' : 'tenant'} email: ${email}`);
       const response = await authService.forgotPassword(email, isOwner);
       console.log('Forgot password response:', response);
-      addLog(`Forgot password response: ${JSON.stringify(response)}`);
+      // addLog(`Forgot password response: ${JSON.stringify(response)}`);
       
       if (!response.otp) {
         throw new Error('OTP not received from server');
       }
 
-      addLog(`OTP received from API: ${response.otp}`);
+      // addLog(`OTP received from API: ${response.otp}`);
       
       // Store OTP in AsyncStorage with expiration
       const otpData = {
@@ -62,7 +62,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
         isOwner: isOwner // Store whether this is for owner or tenant
       };
       console.log('Storing OTP data:', otpData);
-      addLog(`Storing OTP data: ${JSON.stringify(otpData)}`);
+      // addLog(`Storing OTP data: ${JSON.stringify(otpData)}`);
       await AsyncStorage.setItem('resetPasswordOTP', JSON.stringify(otpData));
       
       // Verify the stored data
@@ -132,14 +132,14 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
         </View>
 
         {/* Debug View */}
-        <View style={styles.debugContainer}>
+        {/* <View style={styles.debugContainer}>
           <Text style={styles.debugTitle}>Debug Logs:</Text>
           <ScrollView style={styles.debugLogs}>
             {debugLogs.map((log, index) => (
               <Text key={index} style={styles.debugLog}>{log}</Text>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

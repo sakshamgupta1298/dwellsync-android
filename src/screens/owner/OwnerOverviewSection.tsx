@@ -20,6 +20,7 @@ const OwnerOverviewSection = () => {
   const [monthlyRent, setMonthlyRent] = useState('');
   const [initialElectricity, setInitialElectricity] = useState('');
   const [initialWater, setInitialWater] = useState('');
+  const [deposit, setDeposit] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   // Placeholder handlers
@@ -32,7 +33,8 @@ const OwnerOverviewSection = () => {
         tenantName,
         Number(monthlyRent),
         Number(initialElectricity),
-        Number(initialWater)
+        Number(initialWater),
+        Number(deposit)
       );
       console.log('Register Tenant Response:', response);
       if (response && response.tenant && response.tenant.tenant_id && response.tenant.password) {
@@ -44,6 +46,7 @@ const OwnerOverviewSection = () => {
         setMonthlyRent('');
         setInitialElectricity('');
         setInitialWater('');
+        setDeposit('');
       } else {
         // Try to show the full response for debugging
         Alert.alert('Error', 'No tenant info returned from backend.\n' + JSON.stringify(response));
@@ -163,6 +166,26 @@ const OwnerOverviewSection = () => {
                   value={initialWater}
                   textColor='#fff'
                   onChangeText={setInitialWater}
+                  keyboardType="numeric"
+                  theme={{
+                    roundness: 16,
+                    colors: {
+                      primary: NETFLIX_RED,
+                      text: '#fff',
+                      placeholder: NETFLIX_GRAY,
+                      background: NETFLIX_CARD,
+                    },
+                  }}
+                  underlineColor={NETFLIX_RED}
+                  selectionColor={NETFLIX_RED}
+                />
+                <TextInput
+                  style={[styles.input, { color: '#fff' }]}
+                  mode="flat"
+                  label="Deposit (₹)"
+                  value={deposit}
+                  textColor='#fff'
+                  onChangeText={setDeposit}
                   keyboardType="numeric"
                   theme={{
                     roundness: 16,
