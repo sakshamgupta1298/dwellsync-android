@@ -76,6 +76,7 @@ const OwnerTenantsSection = () => {
               <Text style={styles.tenantName}>{item.name}</Text>
               <Text style={styles.label}>ID: <Text style={styles.value}>{item.tenant_id}</Text></Text>
               <Text style={styles.label}>Rent: <Text style={styles.value}>₹{item.rent_amount}</Text></Text>
+              <Text style={styles.label}>Deposit: <Text style={styles.value}>₹{item.deposit}</Text></Text>
               <Text style={styles.label}>Status: <Text style={styles.value}>{item.status || 'Active'}</Text></Text>
               <TouchableOpacity
                 style={[styles.deleteButton, deletingId === item.id && { opacity: 0.5 }]}

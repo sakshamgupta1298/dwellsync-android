@@ -148,6 +148,14 @@ const DashboardScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </View>
+        {/* Deposit Card */}
+        <Surface style={styles.card}>
+          <Text style={styles.cardTitle}>Deposit</Text>
+          <View style={styles.billingRow}>
+            <Text style={styles.billingLabel}>Deposit Amount</Text>
+            <Text style={styles.billingValue}>₹{dashboardData?.tenant?.deposit ?? 'N/A'}</Text>
+          </View>
+        </Surface>
         {/* Billing Card */}
         <Surface style={styles.card}>
           <Text style={styles.cardTitle}>Current Billing</Text>

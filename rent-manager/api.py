@@ -259,6 +259,7 @@ def get_owner_tenants(current_user):
             'tenant_id': t.tenant_id,
             'email': t.email,
             'rent_amount': t.rent_amount,
+            'deposit': t.deposit,
             'created_at': t.created_at.isoformat() if t.created_at else None,
         })
 
@@ -390,7 +391,8 @@ def tenant_dashboard(current_user):
         'tenant': {
             'name': current_user.name,
             'tenant_id': current_user.tenant_id,
-            'rent_amount': current_user.rent_amount
+            'rent_amount': current_user.rent_amount,
+            'deposit': current_user.deposit
         },
         'billing': {
             'rent': current_user.rent_amount,
