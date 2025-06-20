@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     rent_amount = db.Column(db.Float, nullable=False, default=0.0)
     deposit = db.Column(db.Float, nullable=True, default=0.0)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # For tenants, this links to their owner
+    must_change_password = db.Column(db.Boolean, default=True)  # True if using default password
     meter_readings = db.relationship('MeterReading', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -32,6 +33,7 @@ class User(UserMixin, db.Model):
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+        self.must_change_password = False
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)

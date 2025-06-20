@@ -17,6 +17,7 @@ import { tenantService } from '../../services/api';
 import { Surface } from 'react-native-paper';
 import { maintenanceService } from '../../services/maintenanceService';
 import { MaintenanceRequest } from '../../types/maintenance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NETFLIX_BG = '#141414';
 const NETFLIX_CARD = '#232323';
@@ -31,7 +32,7 @@ const DashboardScreen = ({ navigation }: any) => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const { user, signOut } = useAuth();
+  const { user, signOut, mustChangePassword } = useAuth();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,6 +55,35 @@ const DashboardScreen = ({ navigation }: any) => {
     fetchDashboardData();
     maintenanceService.getTenantRequests().then(setMaintenanceRequests);
   }, []);
+
+  useEffect(() => {
+    const showPasswordChangeAlert = async () => {
+      if (!user || user.is_owner || !mustChangePassword) return;
+      const ignoreKey = `ignore_password_change_${user.tenant_id}`;
+      const ignored = await AsyncStorage.getItem(ignoreKey);
+      if (ignored) return;
+      Alert.alert(
+        'Change Password',
+        'Please change the password provided by the owner for your security.',
+        [
+          {
+            text: 'Ignore',
+            onPress: async () => {
+              await AsyncStorage.setItem(ignoreKey, 'true');
+            },
+            style: 'cancel',
+          },
+          {
+            text: 'Okay',
+            onPress: () => {
+              navigation.navigate('TenantProfile');
+            },
+          },
+        ]
+      );
+    };
+    showPasswordChangeAlert();
+  }, [user, mustChangePassword]);
 
   const onRefresh = () => {
     setRefreshing(true);

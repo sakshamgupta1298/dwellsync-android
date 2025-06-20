@@ -17,6 +17,7 @@ interface AuthContextData {
   signOut: () => Promise<void>;
   registerOwner: (name: string, email: string, password: string) => Promise<void>;
   registerTenant: (name: string, rentAmount: number) => Promise<void>;
+  mustChangePassword: boolean;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   useEffect(() => {
     loadStoredData();
@@ -46,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.login(tenantId, password);
       setUser(response.user);
+      setMustChangePassword(!!response.must_change_password);
     } catch (error) {
       throw error;
     }
@@ -85,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         registerOwner,
         registerTenant,
+        mustChangePassword,
       }}>
       {children}
     </AuthContext.Provider>

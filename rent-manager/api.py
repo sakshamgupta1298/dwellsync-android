@@ -298,7 +298,8 @@ def login():
                 'name': user.name,
                 'is_owner': user.is_owner,
                 'tenant_id': user.tenant_id if not user.is_owner else None
-            }
+            },
+            'must_change_password': (not user.is_owner and getattr(user, 'must_change_password', False))
         })
     
     return jsonify({'error': 'Invalid credentials'})
@@ -669,6 +670,7 @@ def change_password(current_user):
         
         # Update password
         current_user.set_password(new_password)
+        current_user.must_change_password = False
         db.session.commit()
         
         return jsonify({
