@@ -107,7 +107,7 @@ const DashboardScreen = ({ navigation }: any) => {
         '',
         [
           { text: 'Cash', onPress: () => onSelect(0) },
-          { text: 'Debit/Credit Card', onPress: () => onSelect(2) },
+          { text: 'Other Options', onPress: () => onSelect(2) },
           { text: 'Cancel', style: 'cancel', onPress: () => {} },
         ]
       );

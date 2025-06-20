@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Alert, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Dimensions, Image, Alert, ScrollView, RefreshControl, Share } from 'react-native';
 import { Text, TextInput, Button, Surface, Card } from 'react-native-paper';
 import { ownerService } from '../../services/api'; // Make sure this import exists
 import { useAuth } from '../../utils/AuthContext';
@@ -40,7 +40,18 @@ const OwnerOverviewSection = () => {
       if (response && response.tenant && response.tenant.tenant_id && response.tenant.password) {
         Alert.alert(
           'Tenant Registered',
-          `Tenant ID: ${response.tenant.tenant_id}\nPassword: ${response.tenant.password}`
+          `Tenant ID: ${response.tenant.tenant_id}\nPassword: ${response.tenant.password}`,
+          [
+            {
+              text: 'Share',
+              onPress: () => {
+                Share.share({
+                  message: `LiveInSync Tenant Credentials:\nTenant ID: ${response.tenant.tenant_id}\nPassword: ${response.tenant.password}`,
+                });
+              },
+            },
+            { text: 'OK' },
+          ]
         );
         setTenantName('');
         setMonthlyRent('');

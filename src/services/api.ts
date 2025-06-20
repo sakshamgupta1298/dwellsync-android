@@ -31,6 +31,9 @@ export const authService = {
     try {
       const response = await api.post('/login', { tenant_id: tenantId, password });
       console.log("response:",response)
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
       if (response.data.token) {
         await AsyncStorage.setItem('token', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));

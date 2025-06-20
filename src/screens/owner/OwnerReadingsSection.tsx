@@ -53,7 +53,7 @@ const OwnerReadingsSection = () => {
     return (
       <View style={styles.readingCard} key={item.id}>
         <Text style={styles.readingText}>Tenant: <Text style={styles.readingHighlight}>{item.tenant_name}</Text></Text>
-        <Text style={styles.readingText}>Value: <Text style={styles.readingHighlight}>{item.reading_value}</Text></Text>
+        <Text style={styles.readingText}>Units: <Text style={styles.readingHighlight}>{item.reading_value}</Text></Text>
         <Text style={styles.readingText}>Date: <Text style={styles.readingHighlight}>{new Date(item.reading_date).toLocaleString()}</Text></Text>
         {imageUrl ? (
           <TouchableOpacity onPress={() => {

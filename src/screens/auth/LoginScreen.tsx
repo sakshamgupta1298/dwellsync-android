@@ -41,10 +41,7 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
       setLoading(true);
       await signIn(tenantId, password);
     } catch (error: any) {
-      Alert.alert(
-        'Login Failed',
-        error.response?.data?.error || 'An error occurred during login'
-      );
+      Alert.alert('Wrong credentials', 'The credentials you entered are incorrect.');
     } finally {
       setLoading(false);
     }
@@ -70,7 +67,7 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
             <TextInput
               style={styles.input}
               mode="flat"
-              label={showRegister ? "Tenant ID or Email" : "Tenant ID"}
+              label={showRegister ? "Email" : "Tenant ID"}
               value={tenantId}
               textColor='#fff'
               onChangeText={setTenantId}
@@ -108,14 +105,16 @@ const LoginScreen = ({ navigation, showRegister = true }: LoginScreenProps) => {
               underlineColor={NETFLIX_RED}
               selectionColor={NETFLIX_RED}
             />
-            <Button
-              mode="text"
-              labelStyle={styles.forgotPasswordLink}
-              onPress={() => navigation.navigate('ForgotPassword', { isOwner: showRegister })}
-              style={styles.forgotPasswordButton}
-            >
-              Forgot Password?
-            </Button>
+            {showRegister && (
+              <Button
+                mode="text"
+                labelStyle={styles.forgotPasswordLink}
+                onPress={() => navigation.navigate('ForgotPassword', { isOwner: showRegister })}
+                style={styles.forgotPasswordButton}
+              >
+                Forgot Password?
+              </Button>
+            )}
             <Button
               mode="contained"
               style={styles.loginButton}
